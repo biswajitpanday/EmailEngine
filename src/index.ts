@@ -1,23 +1,42 @@
-import 'reflect-metadata';
-import { InversifyExpressServer, interfaces } from 'inversify-express-utils';
-import { container } from './infrastructure/di/container';
-import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
-import './presentation/controllers/HealthCheckController';
+import "reflect-metadata";
+import { InversifyExpressServer, interfaces } from "inversify-express-utils";
+import { container } from "./infrastructure/di/container";
+import bodyParser from "body-parser";
+import dotenv from "dotenv";
+import "./presentation/controllers/HealthCheckController";
+import logger from "./utils/Logger";
+import { errorHandler } from "./utils/ErrorHandler";
 
 dotenv.config();
 
-// Create the server
-const server = new InversifyExpressServer(container);
+try {
+  // Create the server
+  const server = new InversifyExpressServer(container);
 
-server.setConfig((app) => {
-  app.use(bodyParser.urlencoded({ extended: true }));
-  app.use(bodyParser.json());
-});
+  server.setConfig((app) => {
+    app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(bodyParser.json());
+  });
 
-const app = server.build();
-const port = process.env.PORT || 3000;
+  // Set the error handling middleware
+  server.setErrorConfig((app) => {
+    app.use(errorHandler);
+  });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+  const app = server.build();
+  const port = process.env.PORT || 3000;
+
+  app.listen(port, () => {
+    logger.info(`Server is running on port ${port}`);
+  });
+} catch (error: unknown) {
+  if (error instanceof Error) {
+    logger.error("Failed to start the application", {
+      message: error.message,
+      stack: error.stack,
+    });
+  } else {
+    logger.error("Failed to start the application due to an unknown error");
+  }
+  process.exit(1); // Exit the process with an error code
+}
