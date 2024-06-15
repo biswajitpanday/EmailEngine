@@ -1,4 +1,4 @@
-# Project Name
+# Email Engine
 
 ## Git Flow
 
