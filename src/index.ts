@@ -4,6 +4,7 @@ import { container } from './infrastructure/di/container';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import './presentation/controllers/HealthCheckController';
+import logger from './utils/Logger';
 
 dotenv.config();
 
@@ -19,5 +20,5 @@ const app = server.build();
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  logger.info(`Server is running on port ${port}`);
 });
