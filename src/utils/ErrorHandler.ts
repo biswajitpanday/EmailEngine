@@ -2,29 +2,32 @@ import { Request, Response, NextFunction } from "express";
 import logger from "./Logger";
 
 class ApplicationError extends Error {
-  constructor(message: string) {
+  public statusCode: number;
+
+  constructor(message: string, statusCode: number = 500) {
     super(message);
+    this.statusCode = statusCode;
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
 class ValidationError extends ApplicationError {
   constructor(message: string) {
-    super(message);
+    super(message, 400);
     this.name = "ValidationError";
   }
 }
 
 class AuthenticationError extends ApplicationError {
   constructor(message: string) {
-    super(message);
+    super(message, 401);
     this.name = "AuthenticationError";
   }
 }
 
 class NotFoundError extends ApplicationError {
   constructor(message: string) {
-    super(message);
+    super(message, 404);
     this.name = "NotFoundError";
   }
 }
@@ -37,20 +40,9 @@ const errorHandler = (
 ) => {
   logger.error(err.message, { stack: err.stack });
 
-  if (err instanceof ValidationError) {
-    return res.status(400).json({ error: err.message });
+  if (err instanceof ApplicationError) {
+    return res.status(err.statusCode).json({ error: err.message });
   }
-
-  if (err instanceof AuthenticationError) {
-    return res.status(401).json({ error: err.message });
-  }
-
-  if (err instanceof NotFoundError) {
-    return res.status(404).json({ error: err.message });
-  }
-  // For other types of errors, you can handle them similarly
-  // e.g., DatabaseError, NotFoundError, etc.
-
   res.status(500).json({ error: "Internal Server Error" });
 };
 
