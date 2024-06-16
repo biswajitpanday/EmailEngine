@@ -1,4 +1,4 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 import { InversifyExpressServer, interfaces } from "inversify-express-utils";
 import { container } from "./infrastructure/di/container";
 import bodyParser from "body-parser";
@@ -25,6 +25,8 @@ try {
 
   const app = server.build();
   const port = process.env.PORT || 3000;
+
+connectDB();
 
   app.listen(port, () => {
     logger.info(`Server is running on port ${port}`);
