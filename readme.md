@@ -39,36 +39,63 @@ Create a .env file in the root directory and add the following variables:
 ## Project Structure
 
 ````bash
-├── src
-│   ├── application
-│   │   └── services
-│   │       └── AuthService.ts
-│   ├── domain
-│   │   ├── interfaces
-│   │   │   └── IUserRepository.ts
-│   │   └── models
-│   │       └── UserModel.ts
-│   ├── infrastructure
-│   │   ├── config
-│   │   │   └── MongooseConnection.ts
-│   │   ├── persistence
-│   │   │   ├── schemas
-│   │   │   │   ├── IBaseModel.ts
-│   │   │   │   └── UserSchema.ts
-│   │   └── repositories
-│   │       ├── RepositoryBase.ts
-│   │       └── UserRepository.ts
-│   ├── presentation
-│   │   ├── controllers
-│   │   │   └── AuthController.ts
-│   │   └── middlewares
-│   │       ├── ErrorHandler.ts
-│   │       └── HealthCheckController.ts
-│   └── utils
-│       └── Logger.ts
+EMAILENGINE/
+├── .vscode/
+├── dist/
+├── node_modules/
+├── src/
+│ ├── application/
+│ │ ├── interfaces/
+│ │ │ └── IAuthService.ts
+│ │ └── services/
+│ │ └── AuthService.ts
+│ ├── domain/
+│ │ ├── interfaces/
+│ │ │ ├── IRepositoryBase.ts
+│ │ │ └── IUserRepository.ts
+│ │ └── models/
+│ │ ├── BaseModel.ts
+│ │ ├── IPagedResponse.ts
+│ │ ├── PagingRequest.ts
+│ │ └── UserModel.ts
+│ ├── infrastructure/
+│ │ ├── config/
+│ │ │ └── MongooseConnection.ts
+│ │ ├── di/
+│ │ │ ├── container.ts
+│ │ │ └── types.ts
+│ │ ├── persistence/
+│ │ │ ├── schemas/
+│ │ │ │ ├── IBaseModel.ts
+│ │ │ │ └── UserSchema.ts
+│ │ │ ├── validations/
+│ │ │ │ └── BaseValidationSchema.ts
+│ │ │ └── repositories/
+│ │ │ ├── RepositoryBase.ts
+│ │ │ └── UserRepository.ts
+│ ├── logs/
+│ ├── presentation/
+│ │ ├── controllers/
+│ │ │ ├── AuthController.ts
+│ │ │ └── HealthCheckController.ts
+│ │ └── routes/
+│ │ └── AuthRoutes.ts
+│ ├── utils/
+│ │ ├── ErrorHandler.ts
+│ │ ├── Logger.ts
+│ │ └── index.ts
+├── .dockerignore
 ├── .env
+├── .gitignore
+├── docker-compose.yml
+├── Dockerfile
+├── gitflow.md
+├── LICENSE
+├── nodemon.json
+├── package-lock.json
 ├── package.json
-└── README.md
+├── readme.md
+└── tsconfig.json
 ````
 
 ## Usage

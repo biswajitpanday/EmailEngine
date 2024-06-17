@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import "./presentation/controllers/HealthCheckController";
 import logger from "./utils/Logger";
 import { errorHandler } from "./utils/ErrorHandler";
+import connectDB from './infrastructure/config/MongooseConnection';
 
 dotenv.config();
 
@@ -26,7 +27,7 @@ try {
   const app = server.build();
   const port = process.env.PORT || 3000;
 
-connectDB();
+  connectDB();
 
   app.listen(port, () => {
     logger.info(`Server is running on port ${port}`);
