@@ -1,4 +1,4 @@
-import 'reflect-metadata';
+import "reflect-metadata";
 import { InversifyExpressServer, interfaces } from "inversify-express-utils";
 import { container } from "./infrastructure/di/container";
 import bodyParser from "body-parser";
@@ -6,10 +6,20 @@ import dotenv from "dotenv";
 import "./presentation/controllers/HealthCheckController";
 import logger from "./utils/Logger";
 import { errorHandler } from "./utils/ErrorHandler";
-import connectDB from './infrastructure/config/MongooseConnection';
-import initializeElasticsearch from './infrastructure/config/ElasticsearchConnection';
+import connectDB from "./infrastructure/config/MongooseConnection";
+import * as fs from "fs";
+import initializeElasticsearch from "./infrastructure/config/ElasticsearchConnection";
 
-dotenv.config();
+const envFile =
+  process.env.NODE_ENV === "production"
+    ? ".env.production"
+    : ".env.development";
+logger.info(`Selected Environment file: ${envFile}`);
+if (fs.existsSync(envFile)) {
+  dotenv.config({ path: envFile });
+} else {
+  dotenv.config(); // Default to .env
+}
 
 try {
   // Create the server
@@ -29,7 +39,7 @@ try {
   const port = process.env.PORT || 3000;
 
   connectDB();
-  //initializeElasticsearch();	// Todo: Uncomment and fix after configuring Docker 
+  //initializeElasticsearch();	// Todo: Uncomment and fix after configuring Docker
 
   app.listen(port, () => {
     logger.info(`Server is running on port ${port}`);
