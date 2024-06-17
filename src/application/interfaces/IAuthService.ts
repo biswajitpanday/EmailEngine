@@ -1,4 +1,4 @@
-import { UserModel } from "../../domain/models/UserModel";
+import { UserModel } from '../../domain/models/UserModel';
 
 /**
  * Interface representing the authentication service

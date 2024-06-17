@@ -1,7 +1,7 @@
-import { Schema, model, Document, Model, Types } from "mongoose";
-import Joi from "joi";
-import { IBaseModel } from "./IBaseModel";
-import { baseValidationSchema } from "../validations/BaseValidationSchema";
+import { Schema, model, Document, Model, Types } from 'mongoose';
+import Joi from 'joi';
+import { IBaseModel } from './IBaseModel';
+import { baseValidationSchema } from '../validations/BaseValidationSchema';
 
 // Define the IUser interface extending Document and IBaseModel
 interface IUser extends IBaseModel {
@@ -18,10 +18,10 @@ const userValidationSchema = baseValidationSchema.concat(
     email: Joi.string()
       .email({ tlds: { allow: false } })
       .required()
-      .label("Email Address"),
-    password: Joi.string().min(4).required().label("Password"),
-    outlookToken: Joi.string().optional().allow(null).label("Outlook Token"),
-  })
+      .label('Email Address'),
+    password: Joi.string().min(4).required().label('Password'),
+    outlookToken: Joi.string().optional().allow(null).label('Outlook Token'),
+  }),
 );
 
 // Define the user schema
@@ -33,16 +33,16 @@ const userSchema = new Schema<IUserDocument>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Pre-save hook for validation
-userSchema.pre<IUserDocument>("save", function (next) {
+userSchema.pre<IUserDocument>('save', function (next) {
   const userObject = this.toObject();
   delete userObject._id; // Remove _id before validation
   const { error } = userValidationSchema.validate(userObject);
   if (error) {
-    return next(new Error(error.details.map((x) => x.message).join(", ")));
+    return next(new Error(error.details.map((x) => x.message).join(', ')));
   }
   next();
 });
@@ -51,8 +51,8 @@ userSchema.pre<IUserDocument>("save", function (next) {
 userSchema.index({ email: 1 }, { unique: true });
 
 const UserSchema: Model<IUserDocument> = model<IUserDocument>(
-  "User",
-  userSchema
+  'User',
+  userSchema,
 );
 
 export { UserSchema, IUserDocument };

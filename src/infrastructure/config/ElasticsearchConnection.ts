@@ -1,7 +1,7 @@
-import { Client } from "@elastic/elasticsearch";
-import logger from "../../utils/Logger";
+import { Client } from '@elastic/elasticsearch';
+import logger from '../../utils/Logger';
 
-const DEFAULT_ELASTICSEARCH_HOST = "http://localhost:9200";
+const DEFAULT_ELASTICSEARCH_HOST = 'http://localhost:9200';
 
 /**
  * Connect to Elasticsearch
@@ -14,9 +14,9 @@ const connectElasticsearch = async (): Promise<Client> => {
 
   try {
     await esClient.ping();
-    logger.info("Elasticsearch connected successfully");
+    logger.info('Elasticsearch connected successfully');
   } catch (err) {
-    logger.error("Elasticsearch connection error:", err);
+    logger.error('Elasticsearch connection error:', err);
     process.exit(1); // Exit the process if Elasticsearch connection fails
   }
 
