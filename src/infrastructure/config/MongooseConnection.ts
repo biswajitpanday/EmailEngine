@@ -1,12 +1,15 @@
 import mongoose from 'mongoose';
 import logger from '../../utils/Logger';
 
+const DEFAULT_MONGO_URI = 'mongodb://localhost:27017/emailenginedb';
+
 const connectDB = async () => {
   try {
-    const mongoUri = process.env.MONGO_URI_CLOUD || 'mongodb://localhost:27017/emailenginedb'
-    console.log(`MongoDB Connection String: `, mongoUri);
+    const mongoUri = process.env.MONGO_URI || DEFAULT_MONGO_URI
+    logger.info(`MongoDB Connection String: ${mongoUri}`);
     await mongoose.connect(mongoUri, {} as mongoose.ConnectOptions);
     logger.info('MongoDB connected');
+	
     await initializeCollection();
   } catch (err) {
     logger.error('MongoDB connection error:', err);

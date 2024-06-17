@@ -6,7 +6,7 @@ import { baseValidationSchema } from "../validations/BaseValidationSchema";
 // Define the IUser interface extending Document and IBaseModel
 interface IUser extends IBaseModel {
   email: string;
-  password?: string;
+  password: string;
   outlookToken?: string;
 }
 
@@ -19,7 +19,7 @@ const userValidationSchema = baseValidationSchema.concat(
       .email({ tlds: { allow: false } })
       .required()
       .label("Email Address"),
-    password: Joi.string().min(6).required().label("Password"),
+    password: Joi.string().min(4).required().label("Password"),
     outlookToken: Joi.string().optional().allow(null).label("Outlook Token"),
   })
 );
@@ -36,6 +36,7 @@ const userSchema = new Schema<IUserDocument>(
   }
 );
 
+// Pre-save hook for validation
 userSchema.pre<IUserDocument>("save", function (next) {
   const userObject = this.toObject();
   delete userObject._id; // Remove _id before validation
@@ -46,8 +47,11 @@ userSchema.pre<IUserDocument>("save", function (next) {
   next();
 });
 
+// Ensure unique email index
+userSchema.index({ email: 1 }, { unique: true });
+
 const UserSchema: Model<IUserDocument> = model<IUserDocument>(
-  "users",
+  "User",
   userSchema
 );
 

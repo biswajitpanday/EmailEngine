@@ -33,7 +33,7 @@
 Create a .env file in the root directory and add the following variables:
 
     ```bash
-    MONGO_URI_CLOUD=mongodb+srv://<username>:<password>@<cluster-url>/<dbname>?retryWrites=true&w=majority&appName=emailenginedb
+    MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<dbname>?retryWrites=true&w=majority&appName=emailenginedb
     ```
 
 ## Project Structure

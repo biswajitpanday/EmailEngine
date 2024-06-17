@@ -1,9 +1,15 @@
 import { Client } from "@elastic/elasticsearch";
 import logger from "../../utils/Logger";
 
+const DEFAULT_ELASTICSEARCH_HOST = "http://localhost:9200";
+
+/**
+ * Connect to Elasticsearch
+ * @returns {Promise<Client>} Elasticsearch client
+ */
 const connectElasticsearch = async (): Promise<Client> => {
   const esClient = new Client({
-    node: process.env.ELASTICSEARCH_HOST || "http://localhost:9200",
+    node: process.env.ELASTICSEARCH_HOST || DEFAULT_ELASTICSEARCH_HOST,
   });
 
   try {
@@ -17,7 +23,11 @@ const connectElasticsearch = async (): Promise<Client> => {
   return esClient;
 };
 
-const initializeElasticsearch = async () => {
+/**
+ * Initialize Elasticsearch
+ * @returns {Promise<Client>} Elasticsearch client
+ */
+const initializeElasticsearch = async (): Promise<Client> => {
   const esClient = await connectElasticsearch();
   // You can set up indices or perform initial checks here if needed
   return esClient;
