@@ -1,4 +1,14 @@
+/**
+ * Interface representing an Elasticsearch document.
+ */
 export interface ElasticSearchDocument {
-  id?: string; // Optional for new documents
-  [key: string]: any; // Allow for any other properties
+  /**
+   * Unique identifier for the document. Optional for new documents.
+   */
+  id?: string;
+
+  /**
+   * Any other properties specific to the document.
+   */
+  [key: string]: any;
 }

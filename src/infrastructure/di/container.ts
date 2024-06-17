@@ -7,6 +7,7 @@ import AuthService from '../../application/services/AuthService';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
 import { UserRepository } from '../repositories/UserRepository';
 import { ElasticsearchRepository } from '../repositories/ElasticSearchRepository';
+import { Client } from '@elastic/elasticsearch';
 
 const container = new Container({skipBaseClassChecks: true});
 
@@ -22,6 +23,9 @@ container.bind<IAuthService>(TYPES.AuthService).to(AuthService);
 
 //#region Repositories
 container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
+
+// const elasticsearchClient = new Client({ node: process.env.ELASTICSEARCH_HOST });
+// container.bind(ElasticsearchRepository).toDynamicValue(() => new ElasticsearchRepository(elasticsearchClient, 'indexName'));
 //#endregion
 
 
