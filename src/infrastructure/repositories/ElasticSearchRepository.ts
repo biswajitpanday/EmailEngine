@@ -1,7 +1,7 @@
-import { Client } from "@elastic/elasticsearch";
-import logger from "../../utils/Logger";
-import { ElasticSearchDocument } from "../persistence/documents/ElasticSearchDocument";
-import { IElasticsearchRepository } from "../../domain/interfaces/IElasticSearchRepository";
+import { Client } from '@elastic/elasticsearch';
+import logger from '../../utils/Logger';
+import { ElasticSearchDocument } from '../persistence/documents/ElasticSearchDocument';
+import { IElasticsearchRepository } from '../../domain/interfaces/IElasticSearchRepository';
 
 export class ElasticsearchRepository<T extends ElasticSearchDocument>
   implements IElasticsearchRepository<T>
@@ -27,12 +27,12 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
       })) as any;
 
       logger.info(
-        `Document created in index ${this.indexName} with ID: ${response.body._id}`
+        `Document created in index ${this.indexName} with ID: ${response.body._id}`,
       );
       return { ...document, id: response.body._id }; // Include generated ID
     } catch (err) {
       logger.error(`Error creating document in index ${this.indexName}:`, err);
-      throw new Error("Error creating document");
+      throw new Error('Error creating document');
     }
   }
 
@@ -56,9 +56,9 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
     } catch (err) {
       logger.error(
         `Error executing search query in index ${this.indexName}:`,
-        err
+        err,
       );
-      throw new Error("Error executing search query");
+      throw new Error('Error executing search query');
     }
   }
 
@@ -75,7 +75,7 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
       })) as any;
 
       logger.info(
-        `Document retrieved from index ${this.indexName} with ID: ${id}`
+        `Document retrieved from index ${this.indexName} with ID: ${id}`,
       );
       return response.body
         ? { ...response.body._source, id: response.body._id }
@@ -83,12 +83,12 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
     } catch (err: any) {
       logger.error(
         `Error retrieving document from index ${this.indexName} with ID: ${id}`,
-        err
+        err,
       );
       if (err.meta && err.meta.statusCode === 404) {
         return null;
       }
-      throw new Error("Error retrieving document");
+      throw new Error('Error retrieving document');
     }
   }
 
@@ -107,7 +107,7 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
       })) as any;
 
       logger.info(`Document updated in index ${this.indexName} with ID: ${id}`);
-      if (updateResult.body.result === "updated") {
+      if (updateResult.body.result === 'updated') {
         const updatedDoc = await this.getById(id);
         return updatedDoc;
       }
@@ -115,9 +115,9 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
     } catch (err) {
       logger.error(
         `Error updating document in index ${this.indexName} with ID: ${id}`,
-        err
+        err,
       );
-      throw new Error("Error updating document");
+      throw new Error('Error updating document');
     }
   }
 
@@ -133,14 +133,14 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
       });
 
       logger.info(
-        `Document deleted from index ${this.indexName} with ID: ${id}`
+        `Document deleted from index ${this.indexName} with ID: ${id}`,
       );
     } catch (err) {
       logger.error(
         `Error deleting document from index ${this.indexName} with ID: ${id}`,
-        err
+        err,
       );
-      throw new Error("Error deleting document");
+      throw new Error('Error deleting document');
     }
   }
 }

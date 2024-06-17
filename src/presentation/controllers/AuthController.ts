@@ -9,9 +9,7 @@ import { validateModel } from '../../utils/ValidateModel';
 
 @controller('/auth')
 export class AuthController {
-  constructor(
-    @inject(TYPES.AuthService) private authService: AuthService
-  ) {}
+  constructor(@inject(TYPES.AuthService) private authService: AuthService) {}
 
   @httpPost('/register')
   public async register(req: Request, res: Response): Promise<void> {

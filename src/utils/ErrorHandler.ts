@@ -34,7 +34,7 @@ const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction,
 ) => {
   logger.error(err.message, { stack: err.stack });
 
@@ -45,4 +45,10 @@ const errorHandler = (
   res.status(500).json({ error: 'Internal Server Error' });
 };
 
-export { errorHandler, ValidationError, AuthenticationError, NotFoundError, ApplicationError };
+export {
+  errorHandler,
+  ValidationError,
+  AuthenticationError,
+  NotFoundError,
+  ApplicationError,
+};

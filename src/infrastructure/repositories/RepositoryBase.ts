@@ -1,9 +1,9 @@
-import { injectable } from "inversify";
-import * as mongoose from "mongoose";
-import { IBaseModel } from "../persistence/schemas/IBaseModel";
-import { IRepositoryBase } from "../../domain/interfaces/IRepositoryBase";
-import { PagingRequest } from "../../domain/models/PagingRequest";
-import { IPagedResponse } from "../../domain/models/IPagedResponse";
+import { injectable } from 'inversify';
+import * as mongoose from 'mongoose';
+import { IBaseModel } from '../persistence/schemas/IBaseModel';
+import { IRepositoryBase } from '../../domain/interfaces/IRepositoryBase';
+import { PagingRequest } from '../../domain/models/PagingRequest';
+import { IPagedResponse } from '../../domain/models/IPagedResponse';
 
 @injectable()
 export abstract class RepositoryBase<T extends IBaseModel>
@@ -25,7 +25,7 @@ export abstract class RepositoryBase<T extends IBaseModel>
   public async filter(
     query?: any,
     paging?: PagingRequest,
-    sort?: any
+    sort?: any,
   ): Promise<IPagedResponse<T>> {
     try {
       const [list, count] = await Promise.all([
@@ -186,7 +186,7 @@ export abstract class RepositoryBase<T extends IBaseModel>
   public async collectionFilter(
     query?: any,
     paging?: PagingRequest,
-    sort?: any
+    sort?: any,
   ): Promise<T[]> {
     try {
       const aggregations: any = [];

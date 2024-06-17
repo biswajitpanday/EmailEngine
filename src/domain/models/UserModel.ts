@@ -1,6 +1,6 @@
-import { IsEmail, IsNotEmpty, IsOptional, Length } from "class-validator";
-import { BaseModel } from "./BaseModel";
-import { Exclude, Expose } from "class-transformer";
+import { IsEmail, IsNotEmpty, IsOptional, Length } from 'class-validator';
+import { BaseModel } from './BaseModel';
+import { Exclude, Expose } from 'class-transformer';
 
 /**
  * User model class with validation
