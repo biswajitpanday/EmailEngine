@@ -1,7 +1,7 @@
-import * as mongoose from "mongoose";
-import { IPagedResponse } from "../models/IPagedResponse";
-import { PagingRequest } from "../models/PagingRequest";
-import { IBaseModel } from "../../infrastructure/persistence/schemas/IBaseModel";
+import * as mongoose from 'mongoose';
+import { IPagedResponse } from '../models/IPagedResponse';
+import { PagingRequest } from '../models/PagingRequest';
+import { IBaseModel } from '../../infrastructure/persistence/schemas/IBaseModel';
 
 /**
  * Generic interface for repository operations
@@ -15,7 +15,11 @@ export interface IRepositoryBase<T extends IBaseModel> {
    * @param sort - Sorting criteria
    * @returns A paginated response containing the list of documents and count
    */
-  filter(query?: any, paging?: PagingRequest, sort?: any): Promise<IPagedResponse<T>>;
+  filter(
+    query?: any,
+    paging?: PagingRequest,
+    sort?: any,
+  ): Promise<IPagedResponse<T>>;
 
   /**
    * Finds a document by its ID.

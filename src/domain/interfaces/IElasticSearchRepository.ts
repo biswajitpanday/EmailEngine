@@ -1,4 +1,4 @@
-import { ElasticSearchDocument } from "../../infrastructure/persistence/documents/ElasticSearchDocument";
+import { ElasticSearchDocument } from '../../infrastructure/persistence/documents/ElasticSearchDocument';
 
 /**
  * Generic interface for Elasticsearch repository operations

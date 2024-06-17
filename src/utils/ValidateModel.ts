@@ -1,5 +1,5 @@
-import { validate } from "class-validator";
-import { ValidationError } from "./ErrorHandler";
+import { validate } from 'class-validator';
+import { ValidationError } from './ErrorHandler';
 
 /**
  * Utility function to validate a model using class-validator
@@ -11,7 +11,7 @@ export const validateModel = async (model: object): Promise<void> => {
   if (validationErrors.length > 0) {
     const errorMessages = validationErrors
       .map((error) => Object.values(error.constraints || {}))
-      .join(", ");
+      .join(', ');
     throw new ValidationError(`Validation failed: ${errorMessages}`);
   }
 };
