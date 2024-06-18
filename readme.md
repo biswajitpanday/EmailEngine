@@ -4,15 +4,18 @@
 ## Features
 - Centralized validation: Uses Joi for validating common properties.
 - MongoDB integration: Uses Mongoose for MongoDB interactions.
+- Elasticsearch integration: Uses Elasticsearch for full-text search capabilities.
 - Flexible repository pattern: Abstract repository base class for different schemas.
 - Centralized logging: Utilizes a logger for consistent logging across the application.
 - Error handling: Global error handler for managing exceptions.
 - Health check: Endpoint to monitor the health of the service.
 - Paging support: Handles paging requests and responses in the repository.
+- Hot reloading: Utilizes `nodemon` for hot reloading during development.
 
 ## Prerequisites
 - Node.js (v14 or higher)
 - MongoDB
+- Docker
 
 ## Installation
     
@@ -34,6 +37,7 @@ Create a .env file in the root directory and add the following variables:
 
     ```bash
     MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<dbname>?retryWrites=true&w=majority&appName=emailenginedb
+    ELASTICSEARCH_HOST=http://localhost:9200
     ```
 
 ## Project Structure
@@ -42,60 +46,74 @@ Create a .env file in the root directory and add the following variables:
 EMAILENGINE/
 ├── .vscode/
 ├── dist/
+├── logs/
 ├── node_modules/
 ├── src/
-│ ├── application/
-│ │ ├── interfaces/
-│ │ │ └── IAuthService.ts
-│ │ └── services/
-│ │ └── AuthService.ts
-│ ├── domain/
-│ │ ├── interfaces/
-│ │ │ ├── IRepositoryBase.ts
-│ │ │ └── IUserRepository.ts
-│ │ └── models/
-│ │ ├── BaseModel.ts
-│ │ ├── IPagedResponse.ts
-│ │ ├── PagingRequest.ts
-│ │ └── UserModel.ts
-│ ├── infrastructure/
-│ │ ├── config/
-│ │ │ └── MongooseConnection.ts
-│ │ ├── di/
-│ │ │ ├── container.ts
-│ │ │ └── types.ts
-│ │ ├── persistence/
-│ │ │ ├── schemas/
-│ │ │ │ ├── IBaseModel.ts
-│ │ │ │ └── UserSchema.ts
-│ │ │ ├── validations/
-│ │ │ │ └── BaseValidationSchema.ts
-│ │ │ └── repositories/
-│ │ │ ├── RepositoryBase.ts
-│ │ │ └── UserRepository.ts
-│ ├── logs/
-│ ├── presentation/
-│ │ ├── controllers/
-│ │ │ ├── AuthController.ts
-│ │ │ └── HealthCheckController.ts
-│ │ └── routes/
-│ │ └── AuthRoutes.ts
-│ ├── utils/
-│ │ ├── ErrorHandler.ts
-│ │ ├── Logger.ts
-│ │ └── index.ts
+│   ├── application/
+│   │   ├── interfaces/
+│   │   │   └── IAuthService.ts
+│   │   └── services/
+│   │       └── AuthService.ts
+│   ├── domain/
+│   │   ├── interfaces/
+│   │   │   ├── IElasticSearchRepository.ts
+│   │   │   ├── IRepositoryBase.ts
+│   │   │   └── IUserRepository.ts
+│   │   └── models/
+│   │       ├── BaseModel.ts
+│   │       ├── IPagedResponse.ts
+│   │       ├── PagingRequest.ts
+│   │       └── UserModel.ts
+│   ├── infrastructure/
+│   │   ├── config/
+│   │   │   ├── ElasticsearchConnection.ts
+│   │   │   └── MongooseConnection.ts
+│   │   ├── di/
+│   │   │   ├── container.ts
+│   │   │   └── types.ts
+│   │   ├── persistence/
+│   │   │   ├── documents/
+│   │   │   │   └── ElasticSearchDocument.ts
+│   │   │   ├── schemas/
+│   │   │   │   ├── IBaseModel.ts
+│   │   │   │   └── UserSchema.ts
+│   │   │   ├── validations/
+│   │   │   │   └── BaseValidationSchema.ts
+│   │   │   └── repositories/
+│   │   │       ├── ElasticSearchRepository.ts
+│   │   │       ├── RepositoryBase.ts
+│   │   │       └── UserRepository.ts
+│   ├── logs/
+│   ├── presentation/
+│   │   ├── controllers/
+│   │   │   ├── AuthController.ts
+│   │   │   └── HealthCheckController.ts
+│   │   └── routes/
+│   │       └── AuthRoutes.ts
+│   ├── utils/
+│   │   ├── ErrorHandler.ts
+│   │   ├── Logger.ts
+│   │   ├── ValidateModel.ts
+│   │   └── index.ts
 ├── .dockerignore
 ├── .env
+├── .env.development
+├── .env.example
 ├── .gitignore
+├── .prettierignore
+├── .prettierrc
 ├── docker-compose.yml
 ├── Dockerfile
+├── eslint.config.mjs
 ├── gitflow.md
 ├── LICENSE
 ├── nodemon.json
 ├── package-lock.json
 ├── package.json
 ├── readme.md
-└── tsconfig.json
+├── tsconfig.json
+└── tsconfig.tsbuildinfo
+
 ````
 
 ## Usage
@@ -115,6 +133,44 @@ EMAILENGINE/
     ```bash
     npm start
     ```
+## Docker Setup
+To run the application and its dependencies using Docker:
+
+## Docker Setup
+
+To run the application and its dependencies using Docker:
+
+1. **Build and start the Docker containers:**
+
+    ```bash
+    npm run docker:up
+    ```
+
+2. **Stop and remove the Docker containers:**
+
+    ```bash
+    npm run docker:down
+    ```
+
+3. **Clean up Docker resources:**
+
+    ```bash
+    npm run docker:prune
+    ```
+
+4. **Reset Docker environment:** This will run 2 > 3 > 1 
+
+    ```bash
+    npm run docker:reset
+    ```
+
+
+
+# Health Check
+
+The application provides a health check endpoint to monitor the status of the service, MongoDB, and Elasticsearch.
+
+- Health Check Endpoint: GET /health
 
 ## License
 
@@ -124,3 +180,5 @@ This project is licensed under the MIT License.
 - [Node.js](https://nodejs.org/en)
 - [Mongoose](https://mongoosejs.com)
 - [Joi](https://joi.dev)
+- [Elasticsearch](https://www.elastic.co/elasticsearch)
+
