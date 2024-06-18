@@ -6,23 +6,30 @@ import { IAuthService } from '../../application/interfaces/IAuthService';
 import AuthService from '../../application/services/AuthService';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
 import { UserRepository } from '../repositories/UserRepository';
-import { ElasticsearchRepository } from '../repositories/ElasticSearchRepository';
+import initializeElasticsearch from '../config/ElasticsearchConnection';
+import { Client } from '@elastic/elasticsearch';
 
-const container = new Container({skipBaseClassChecks: true});
+const container = new Container({ skipBaseClassChecks: true });
 
-//#region Controllers
-container.bind<HealthCheckController>(HealthCheckController).toSelf();
-container.bind<AuthController>(TYPES.AuthController).to(AuthController);
-//#endregion
+const initializeContainer = async () => {
+  // Elasticsearch Client
+  const esClient = await initializeElasticsearch();
+  container.bind<Client>(TYPES.ElasticsearchClient).toConstantValue(esClient);
 
+  //#region Controllers
+  container.bind<HealthCheckController>(HealthCheckController).toSelf();
+  container.bind<AuthController>(TYPES.AuthController).to(AuthController);
+  //#endregion
 
-//#region Services
-container.bind<IAuthService>(TYPES.AuthService).to(AuthService);
-//#endregion
+  //#region Services
+  container.bind<IAuthService>(TYPES.AuthService).to(AuthService);
+  //#endregion
 
-//#region Repositories
-container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
-//#endregion
+  //#region Repositories
+  container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
+  //#endregion
 
+  return container;
+};
 
-export { container };
+export { container, initializeContainer };
