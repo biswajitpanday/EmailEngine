@@ -3,5 +3,7 @@
   "ext": "ts",
   "exec": "ts-node ./src/index.ts",
   "ignore": ["node_modules", "dist", "src/logs"],
-  "verbose": true
+  "verbose": true,
+  "legacyWatch": true,
+  "pollingInterval": 10000
 }
