@@ -6,23 +6,33 @@ import { IAuthService } from '../../application/interfaces/IAuthService';
 import AuthService from '../../application/services/AuthService';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
 import { UserRepository } from '../repositories/UserRepository';
+import initializeElasticsearch from '../config/ElasticsearchConnection';
+import { Client } from '@elastic/elasticsearch';
 
 const container = new Container({ skipBaseClassChecks: true });
 
-//#region Controllers
-container.bind<HealthCheckController>(HealthCheckController).toSelf();
-container.bind<AuthController>(TYPES.AuthController).to(AuthController);
-//#endregion
+const initializeContainer = async () => {
+  // Elasticsearch Client
+  const esClient = await initializeElasticsearch();
+  container.bind<Client>(TYPES.ElasticsearchClient).toConstantValue(esClient);
 
-//#region Services
-container.bind<IAuthService>(TYPES.AuthService).to(AuthService);
-//#endregion
+  //#region Controllers
+  container.bind<HealthCheckController>(HealthCheckController).toSelf();
+  container.bind<AuthController>(TYPES.AuthController).to(AuthController);
+  //#endregion
 
-//#region Repositories
-container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
+  //#region Services
+  container.bind<IAuthService>(TYPES.AuthService).to(AuthService);
+  //#endregion
 
-// const elasticsearchClient = new Client({ node: process.env.ELASTICSEARCH_HOST });
-// container.bind(ElasticsearchRepository).toDynamicValue(() => new ElasticsearchRepository(elasticsearchClient, 'indexName'));
-//#endregion
+  //#region Repositories
+  container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
 
-export { container };
+  // const elasticsearchClient = new Client({ node: process.env.ELASTICSEARCH_HOST });
+  // container.bind(ElasticsearchRepository).toDynamicValue(() => new ElasticsearchRepository(elasticsearchClient, 'indexName'));
+  //#endregion
+
+  return container;
+};
+
+export { container, initializeContainer };

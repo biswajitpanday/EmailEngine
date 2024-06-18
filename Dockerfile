@@ -7,8 +7,11 @@ WORKDIR /usr/src/app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install app dependencies
-RUN npm install
+# Install app dependencies with the --legacy-peer-deps flag
+RUN npm install --legacy-peer-deps
+
+# Install TypeScript and Nodemon globally
+RUN npm install -g typescript ts-node nodemon
 
 # Copy app source code
 COPY . .
@@ -20,4 +23,5 @@ RUN npm run build
 EXPOSE 3000
 
 # Start the server
-CMD ["npm", "start"]
+# CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]

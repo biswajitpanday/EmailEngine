@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { InversifyExpressServer } from 'inversify-express-utils';
-import { container } from './infrastructure/di/container';
+import { container, initializeContainer } from './infrastructure/di/container';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import './presentation/controllers/HealthCheckController';
@@ -8,6 +8,7 @@ import logger from './utils/Logger';
 import { errorHandler } from './utils/ErrorHandler';
 import connectDB from './infrastructure/config/MongooseConnection';
 import * as fs from 'fs';
+//import initializeElasticsearch from './infrastructure/config/ElasticsearchConnection';
 
 const envFile =
   process.env.NODE_ENV === 'production'
@@ -20,37 +21,42 @@ if (fs.existsSync(envFile)) {
   dotenv.config(); // Default to .env
 }
 
-try {
-  // Create the server
-  const server = new InversifyExpressServer(container);
+(async () => {
+  try {
+    // Initialize IOC Container
+    await initializeContainer();
 
-  server.setConfig((app) => {
-    app.use(bodyParser.urlencoded({ extended: true }));
-    app.use(bodyParser.json());
-  });
+    // Create the server
+    const server = new InversifyExpressServer(container);
 
-  // Set the error handling middleware
-  server.setErrorConfig((app) => {
-    app.use(errorHandler);
-  });
-
-  const app = server.build();
-  const port = process.env.PORT || 3000;
-
-  connectDB();
-  //initializeElasticsearch();	// Todo: Uncomment and fix after configuring Docker
-
-  app.listen(port, () => {
-    logger.info(`Server is running on port ${port}`);
-  });
-} catch (error: unknown) {
-  if (error instanceof Error) {
-    logger.error('Failed to start the application', {
-      message: error.message,
-      stack: error.stack,
+    server.setConfig((app) => {
+      app.use(bodyParser.urlencoded({ extended: true }));
+      app.use(bodyParser.json());
     });
-  } else {
-    logger.error('Failed to start the application due to an unknown error');
+
+    // Set the error handling middleware
+    server.setErrorConfig((app) => {
+      app.use(errorHandler);
+    });
+
+    const app = server.build();
+    const port = process.env.PORT || 3000;
+
+    await connectDB();
+    //await initializeElasticsearch();
+
+    app.listen(port, () => {
+      logger.info(`Server is running on port ${port}`);
+    });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      logger.error('Failed to start the application', {
+        message: error.message,
+        stack: error.stack,
+      });
+    } else {
+      logger.error('Failed to start the application due to an unknown error');
+    }
+    process.exit(1); // Exit the process with an error code
   }
-  process.exit(1); // Exit the process with an error code
-}
+})();
