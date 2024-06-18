@@ -1,37 +1,14 @@
 version: '3.8'
 
-# networks:
-#   docker-network:
-#     name: docker-network
-#     driver: bridge
-
 services:
   elasticsearch:
     image: elasticsearch:7.17.0
     environment:
       - discovery.type=single-node
-      # - bootstrap.memory_lock=true
       - ELASTIC_PASSWORD=${ELASTICSEARCH_PASSWORD}
-      # - ES_JAVA_OPTS=-Xms2g -Xmx2g
-    # ulimits:
-    #   memlock:
-    #     soft: -1
-    #     hard: -1
-    # mem_limit: 4g
     ports:
       - "9200:9200"
       - "9300:9300"
-    # volumes:
-    #   - es-data:/usr/share/elasticsearch/data
-    #   - ./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-    #   - ./certs:/usr/share/elasticsearch/config/certs:ro
-    # networks:
-    #   - docker-network
-    # healthcheck:
-    #   test: ["CMD-SHELL", "curl -s -u elastic:${ELASTICSEARCH_PASSWORD} https://localhost:9200/_cluster/health | grep '\"status\":\"green\"' || exit 1"]
-    #   interval: 15s
-    #   timeout: 10s
-    #   retries: 3
 
   app:
     build:
@@ -51,21 +28,13 @@ services:
     command: npm run dev
     volumes:
       - .:/usr/src/app
-      # - /usr/src/app/node_modules
-      # - ./logs:/usr/src/app/logs
-    # networks:
-    #   - docker-network
 
   mongo:
     image: mongo:latest
     ports:
       - "27017:27017"
     volumes:
-      - mongo-data:/data/db
-    # networks:
-    #   - docker-network
-
-  
+      - mongo-data:/data/db  
 
 volumes:
   mongo-data:
