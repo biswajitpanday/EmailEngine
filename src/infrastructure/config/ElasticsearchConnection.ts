@@ -11,13 +11,6 @@ const DEFAULT_ELASTICSEARCH_HOST = 'http://localhost:9200';
 const connectElasticsearch = async (): Promise<Client> => {
   try {
     logger.info(`Connecting to Elasticsearch...`);
-    // const esClient = new Client({
-    //   node: process.env.ELASTICSEARCH_HOST || DEFAULT_ELASTICSEARCH_HOST,
-    //   auth: {
-    //     username: process.env.ELASTICSEARCH_USERNAME || '',
-    //     password: process.env.ELASTICSEARCH_PASSWORD || '',
-    //   },
-    // });
 
     const esClientOptions: any = {
       node: process.env.ELASTICSEARCH_HOST || DEFAULT_ELASTICSEARCH_HOST,
@@ -43,8 +36,6 @@ const connectElasticsearch = async (): Promise<Client> => {
     const esClient = new Client(esClientOptions);
 
     logger.info(`Successfully connected to Elasticsearch...`);
-
-    //await esClient.ping();
     const health = await esClient.cluster.health({});
     logger.info(
       `Elasticsearch connected successfully\nHealth: ${JSON.stringify(health)}`,
