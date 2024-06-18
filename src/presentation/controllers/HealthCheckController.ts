@@ -24,7 +24,7 @@ export class HealthCheckController {
 
   private async checkDatabaseStatus(): Promise<string> {
     try {
-      await connectDB(); // Or any method to check DB connection
+      await connectDB();
       return 'Mongodb connected';
     } catch (error) {
       return 'disconnected';
@@ -34,7 +34,7 @@ export class HealthCheckController {
   private async checkElasticsearchStatus(): Promise<string> {
     try {
       const health = await this.esClient.cluster.health({});
-      return `connected\nHealth: ${JSON.stringify(health)}`;
+      return `Elasticsearch connected\nHealth: ${JSON.stringify(health)}`;
     } catch (error) {
       return 'disconnected';
     }

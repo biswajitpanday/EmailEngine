@@ -27,9 +27,6 @@ const initializeContainer = async () => {
 
   //#region Repositories
   container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
-
-  // const elasticsearchClient = new Client({ node: process.env.ELASTICSEARCH_HOST });
-  // container.bind(ElasticsearchRepository).toDynamicValue(() => new ElasticsearchRepository(elasticsearchClient, 'indexName'));
   //#endregion
 
   return container;
