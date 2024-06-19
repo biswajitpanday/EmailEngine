@@ -53,7 +53,33 @@ const connectElasticsearch = async (): Promise<Client> => {
  */
 const initializeElasticsearch = async (): Promise<Client> => {
   const esClient = await connectElasticsearch();
-  // You can set up indices or perform initial checks here if needed
+
+  // Check if the "users" index exists and create it if it doesn't
+  const indexName = 'users';
+  const indexExists = await esClient.indices.exists({ index: indexName });
+  if (indexExists.statusCode === 404) {
+    try {
+      await esClient.indices.create({
+        index: indexName,
+        body: {
+          mappings: {
+            properties: {
+              email: { type: 'text' },
+              password: { type: 'text' },
+              outlookToken: { type: 'text' },
+            },
+          },
+        },
+      });
+      logger.info(`Index "${indexName}" created successfully.`);
+    } catch (err) {
+      logger.error(`Error creating index "${indexName}":`, err);
+      process.exit(1);
+    }
+  } else {
+    logger.info(`Index "${indexName}" already exists.`);
+  }
+
   return esClient;
 };
 

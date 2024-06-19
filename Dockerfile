@@ -11,11 +11,11 @@ COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
 # Copy the rest of the source code
-COPY --chown=nodeuser:nodeuser . .
+COPY . .
 
 # Add a user to run the application
-RUN useradd -ms /bin/bash nodeuser
-USER nodeuser
+# RUN useradd -ms /bin/bash nodeuser
+# USER nodeuser
 
 # Build the TypeScript code
 RUN npm run build
