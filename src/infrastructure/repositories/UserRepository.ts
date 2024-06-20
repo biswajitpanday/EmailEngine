@@ -1,9 +1,9 @@
 import { injectable } from 'inversify';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
 import { ElasticsearchRepository } from './ElasticSearchRepository';
-import { UserModel } from '../../domain/models/UserModel';
 import { Client } from '@elastic/elasticsearch';
 import logger from '../../utils/Logger';
+import { UserModel } from '../persistence/documents/UserModel';
 
 @injectable()
 export class UserRepository
@@ -21,15 +21,13 @@ export class UserRepository
    */
   public async findByEmail(email: any): Promise<UserModel | null> {
     const body = {
-      query: {
-        match: { email },
-      },
+      match: { email },
     };
 
-    const results = await this.search(body);
-    if (results.length > 0) {
+    const result = await this.findOne(body);
+    if (result && result.email) {
       logger.info(`User found with email: ${email}`);
-      return results[0];
+      return result;
     }
 
     logger.warn(`No user found with email: ${email}`);

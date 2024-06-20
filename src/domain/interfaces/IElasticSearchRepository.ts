@@ -1,4 +1,6 @@
 import { ElasticSearchDocument } from '../../infrastructure/persistence/documents/ElasticSearchDocument';
+import { IPagedResponse } from '../models/IPagedResponse';
+import { PagingRequest } from '../models/PagingRequest';
 
 /**
  * Generic interface for Elasticsearch repository operations
@@ -6,11 +8,17 @@ import { ElasticSearchDocument } from '../../infrastructure/persistence/document
  */
 export interface IElasticsearchRepository<T extends ElasticSearchDocument> {
   /**
-   * Creates a new document in Elasticsearch.
-   * @param document - The document to create
-   * @returns The created document with the generated ID
+   * Filters documents based on query, paging, and sorting criteria.
+   * @param query - Elasticsearch query object
+   * @param paging - Paging request object
+   * @param sort - Sorting criteria
+   * @returns A paginated response containing the list of documents and count
    */
-  create(document: T): Promise<T>;
+  filter(
+    query?: any,
+    paging?: PagingRequest,
+    sort?: any,
+  ): Promise<IPagedResponse<T>>;
 
   /**
    * Retrieves a document by its ID from Elasticsearch.
@@ -18,6 +26,20 @@ export interface IElasticsearchRepository<T extends ElasticSearchDocument> {
    * @returns The retrieved document or null if not found
    */
   getById(id: string): Promise<T | null>;
+
+  /**
+   * Finds a single document based on query.
+   * @param query - Elasticsearch query object
+   * @returns The found document
+   */
+  findOne(query: any): Promise<T | null>;
+
+  /**
+   * Creates a new document in Elasticsearch.
+   * @param document - The document to create
+   * @returns The created document with the generated ID
+   */
+  create(document: T): Promise<T>;
 
   /**
    * Updates a document by its ID in Elasticsearch.
@@ -34,9 +56,16 @@ export interface IElasticsearchRepository<T extends ElasticSearchDocument> {
   delete(id: string): Promise<void>;
 
   /**
-   * Searches for documents in Elasticsearch based on a query.
-   * @param query - The search query
-   * @returns An array of search results
+   * Counts the number of documents based on query.
+   * @param query - Elasticsearch query object
+   * @returns The count of documents
    */
-  search(query: any): Promise<T[]>;
+  count(query: any): Promise<number>;
+
+  /**
+   * Finds multiple documents based on query.
+   * @param query - Elasticsearch query object
+   * @returns The list of found documents
+   */
+  find(query: any): Promise<T[]>;
 }

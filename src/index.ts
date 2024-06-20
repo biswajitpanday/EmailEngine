@@ -6,9 +6,8 @@ import dotenv from 'dotenv';
 import './presentation/controllers/HealthCheckController';
 import logger from './utils/Logger';
 import { errorHandler } from './utils/ErrorHandler';
-import connectDB from './infrastructure/config/MongooseConnection';
 import * as fs from 'fs';
-//import initializeElasticsearch from './infrastructure/config/ElasticsearchConnection';
+import initializeElasticsearch from './infrastructure/config/ElasticsearchConnection';
 
 const envFile =
   process.env.NODE_ENV === 'production'
@@ -23,8 +22,11 @@ if (fs.existsSync(envFile)) {
 
 (async () => {
   try {
+    // Initialize ElasticSearch
+    const esClient = await initializeElasticsearch();
+
     // Initialize IOC Container
-    await initializeContainer();
+    await initializeContainer(esClient);
 
     // Create the server
     const server = new InversifyExpressServer(container);
@@ -41,8 +43,6 @@ if (fs.existsSync(envFile)) {
 
     const app = server.build();
     const port = process.env.PORT || 3000;
-
-    await connectDB();
 
     app.listen(port, () => {
       logger.info(`Server is running on port ${port}`);
