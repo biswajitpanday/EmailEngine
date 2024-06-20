@@ -172,6 +172,5 @@ This project is licensed under the MIT License.
 
 ## Acknowledgements
 - [Node.js](https://nodejs.org/en)
-- [Joi](https://joi.dev)
 - [Elasticsearch](https://www.elastic.co/elasticsearch)
 
