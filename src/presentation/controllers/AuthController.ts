@@ -6,6 +6,7 @@ import AuthService from '../../application/services/AuthService';
 import { ValidationError, AuthenticationError } from '../../utils/ErrorHandler';
 import { UserModel } from '../../domain/models/UserModel';
 import { validateModel } from '../../utils/ValidateModel';
+import logger from '../../utils/Logger';
 
 @controller('/auth')
 export class AuthController {
@@ -18,6 +19,7 @@ export class AuthController {
       const user = await this.authService.register(email, password);
       res.status(201).json(user);
     } catch (error) {
+      logger.error('Error during registration:', error);
       this.handleError(res, error);
     }
   }
@@ -31,6 +33,7 @@ export class AuthController {
       const user = await this.authService.login(email, password);
       res.status(200).json(user);
     } catch (error) {
+      logger.error('Error during login:', error);
       this.handleError(res, error);
     }
   }

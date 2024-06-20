@@ -1,11 +1,11 @@
 import { IsEmail, IsNotEmpty, IsOptional, Length } from 'class-validator';
-import { BaseModel } from './BaseModel';
 import { Exclude, Expose } from 'class-transformer';
+import { ElasticSearchDocument } from '../../infrastructure/persistence/documents/ElasticSearchDocument';
 
 /**
  * User model class with validation
  */
-export class UserModel extends BaseModel {
+export class UserModel extends ElasticSearchDocument {
   @IsNotEmpty({ message: 'Email is required' })
   @IsEmail({}, { message: 'Invalid email address' })
   @Expose()

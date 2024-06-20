@@ -8,6 +8,8 @@ import { IUserRepository } from '../../domain/interfaces/IUserRepository';
 import { UserRepository } from '../repositories/UserRepository';
 import initializeElasticsearch from '../config/ElasticsearchConnection';
 import { Client } from '@elastic/elasticsearch';
+import { IElasticsearchRepository } from '../../domain/interfaces/IElasticSearchRepository';
+import { ElasticsearchRepository } from '../repositories/ElasticSearchRepository';
 
 const container = new Container({ skipBaseClassChecks: true });
 
@@ -27,6 +29,9 @@ const initializeContainer = async () => {
 
   //#region Repositories
   container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
+  container
+    .bind<IElasticsearchRepository<any>>(TYPES.ElasticsearchRepository)
+    .to(ElasticsearchRepository);
   //#endregion
 
   return container;
