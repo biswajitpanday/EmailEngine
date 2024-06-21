@@ -12,8 +12,8 @@ import { ElasticsearchRepository } from '../repositories/ElasticSearchRepository
 
 const container = new Container({ skipBaseClassChecks: true });
 
-const initializeContainer = async (esClient: Client) => {
-  // Bine Elasticsearch Client
+const initializeIocContainer = async (esClient: Client) => {
+  // Bind Elasticsearch Client
   container.bind<Client>(TYPES.ElasticsearchClient).toConstantValue(esClient);
 
   //#region Bind Controllers
@@ -35,4 +35,4 @@ const initializeContainer = async (esClient: Client) => {
   return container;
 };
 
-export { container, initializeContainer };
+export { container, initializeIocContainer };
