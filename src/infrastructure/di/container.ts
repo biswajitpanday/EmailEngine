@@ -10,6 +10,9 @@ import { Client } from '@elastic/elasticsearch';
 import { IElasticsearchRepository } from '../../domain/interfaces/IElasticSearchRepository';
 import { ElasticsearchRepository } from '../repositories/ElasticSearchRepository';
 import { OAuthService } from '../../application/services/OAuthService';
+import { EmailSyncService } from '../../application/services/EmailSyncService';
+import { EmailSyncRepository } from '../repositories/EmailSyncRepository';
+import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncRepository';
 
 const container = new Container({ skipBaseClassChecks: true });
 
@@ -25,10 +28,14 @@ const initializeIocContainer = async (esClient: Client) => {
   //#region Bind Services
   container.bind<IAuthService>(TYPES.AuthService).to(AuthService);
   container.bind<OAuthService>(TYPES.OAuthService).to(OAuthService);
+  container.bind<EmailSyncService>(TYPES.EmailSyncService).to(EmailSyncService);
   //#endregion
 
   //#region Bind Repositories
   container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
+  container
+    .bind<IEmailSyncRepository>(TYPES.EmailSyncRepository)
+    .to(EmailSyncRepository);
   container
     .bind<IElasticsearchRepository<any>>(TYPES.ElasticsearchRepository)
     .to(ElasticsearchRepository);

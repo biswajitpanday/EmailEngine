@@ -15,11 +15,14 @@ if (fs.existsSync(envFile)) {
 }
 
 import bodyParser from 'body-parser';
+import cron from 'node-cron';
 import { InversifyExpressServer } from 'inversify-express-utils';
 import { errorHandler } from './utils/ErrorHandler';
 import connectElasticsearch from './infrastructure/config/ElasticsearchConnection';
 import { initializeElasticSearchIndexing } from './infrastructure/config/InitializeElasticSearchIndexing';
 import { initializeIocContainer } from './infrastructure/di/container';
+import { TYPES } from './infrastructure/di/types';
+import { EmailSyncService } from './application/services/EmailSyncService';
 
 import './presentation/controllers/HealthCheckController';
 
@@ -52,6 +55,15 @@ import './presentation/controllers/HealthCheckController';
 
     app.listen(port, () => {
       logger.info(`Server is running on port ${port}`);
+    });
+
+    // Schedule email synchronization task
+    const emailSyncService = container.get<EmailSyncService>(
+      TYPES.EmailSyncService,
+    );
+    cron.schedule('*/5 * * * *', async () => {
+      logger.info('Starting email synchronization task');
+      await emailSyncService.syncEmails();
     });
   } catch (error: unknown) {
     if (error instanceof Error) {
