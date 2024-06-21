@@ -9,6 +9,7 @@ import { UserRepository } from '../repositories/UserRepository';
 import { Client } from '@elastic/elasticsearch';
 import { IElasticsearchRepository } from '../../domain/interfaces/IElasticSearchRepository';
 import { ElasticsearchRepository } from '../repositories/ElasticSearchRepository';
+import { OAuthService } from '../../application/services/OAuthService';
 
 const container = new Container({ skipBaseClassChecks: true });
 
@@ -23,6 +24,7 @@ const initializeIocContainer = async (esClient: Client) => {
 
   //#region Bind Services
   container.bind<IAuthService>(TYPES.AuthService).to(AuthService);
+  container.bind<OAuthService>(TYPES.OAuthService).to(OAuthService);
   //#endregion
 
   //#region Bind Repositories
