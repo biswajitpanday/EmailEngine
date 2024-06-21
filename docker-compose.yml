@@ -18,24 +18,14 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=${NODE_ENV}
-      - MONGO_URI=${MONGO_URI}
       - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST}
       - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME}
       - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
     depends_on:
-      - mongo
       - elasticsearch
     command: npm run dev
     volumes:
-      - .:/usr/src/app
-
-  mongo:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db  
+      - .:/usr/src/app  
 
 volumes:
-  mongo-data:
   es-data:

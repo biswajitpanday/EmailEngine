@@ -2,19 +2,15 @@
 ### EmailEngine is a Node.js application
 
 ## Features
-- Centralized validation: Uses Joi for validating common properties.
-- MongoDB integration: Uses Mongoose for MongoDB interactions.
 - Elasticsearch integration: Uses Elasticsearch for full-text search capabilities.
 - Flexible repository pattern: Abstract repository base class for different schemas.
 - Centralized logging: Utilizes a logger for consistent logging across the application.
 - Error handling: Global error handler for managing exceptions.
 - Health check: Endpoint to monitor the health of the service.
-- Paging support: Handles paging requests and responses in the repository.
 - Hot reloading: Utilizes `nodemon` for hot reloading during development.
 
 ## Prerequisites
 - Node.js (v14 or higher)
-- MongoDB
 - Docker
 
 ## Installation
@@ -36,7 +32,6 @@
 Create a .env file in the root directory and add the following variables:
 
     ```bash
-    MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<dbname>?retryWrites=true&w=majority&appName=emailenginedb
     ELASTICSEARCH_HOST=http://localhost:9200
     ```
 
@@ -67,7 +62,6 @@ EMAILENGINE/
 │   ├── infrastructure/
 │   │   ├── config/
 │   │   │   ├── ElasticsearchConnection.ts
-│   │   │   └── MongooseConnection.ts
 │   │   ├── di/
 │   │   │   ├── container.ts
 │   │   │   └── types.ts
@@ -168,7 +162,7 @@ To run the application and its dependencies using Docker:
 
 # Health Check
 
-The application provides a health check endpoint to monitor the status of the service, MongoDB, and Elasticsearch.
+The application provides a health check endpoint to monitor the status of the service, and Elasticsearch.
 
 - Health Check Endpoint: GET /health
 
@@ -178,7 +172,5 @@ This project is licensed under the MIT License.
 
 ## Acknowledgements
 - [Node.js](https://nodejs.org/en)
-- [Mongoose](https://mongoosejs.com)
-- [Joi](https://joi.dev)
 - [Elasticsearch](https://www.elastic.co/elasticsearch)
 
