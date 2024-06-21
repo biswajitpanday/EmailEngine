@@ -19,15 +19,18 @@ const asyncHandler =
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 
-router.post(
-  '/register',
+router.get(
+  '/outlook',
   asyncHandler((req: Request, res: Response) =>
-    authController.register(req, res),
+    authController.redirectToOutlook(req, res),
   ),
 );
-router.post(
-  '/login',
-  asyncHandler((req: Request, res: Response) => authController.login(req, res)),
+
+router.get(
+  '/outlook/callback',
+  asyncHandler((req: Request, res: Response) =>
+    authController.handleOutlookCallback(req, res),
+  ),
 );
 
 export default router;
