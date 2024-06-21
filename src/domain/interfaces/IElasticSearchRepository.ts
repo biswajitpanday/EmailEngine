@@ -68,4 +68,11 @@ export interface IElasticsearchRepository<T extends ElasticSearchDocument> {
    * @returns The list of found documents
    */
   find(query: any): Promise<T[]>;
+
+  /**
+   * Finds a single document based on query.
+   * @param query - Elasticsearch query object
+   * @returns The found document
+   */
+  findOne(query: any): Promise<T | null>;
 }
