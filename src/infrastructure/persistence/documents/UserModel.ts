@@ -27,20 +27,19 @@ export class UserModel extends ElasticSearchDocument {
   /**
    * User model constructor
    * @param email - User's email address
-   * @param password - User's password (optional)
    * @param outlookToken - User's Outlook token (optional)
    * @param refreshToken - User's refresh token (optional)
    */
   constructor(
     email: string,
-    password?: string,
     outlookToken?: string,
     refreshToken?: string,
+    password?: string,
   ) {
     super();
     this.email = email;
-    this.password = password;
     this.outlookToken = outlookToken;
     this.refreshToken = refreshToken;
+    this.password = password;
   }
 }

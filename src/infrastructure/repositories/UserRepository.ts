@@ -21,7 +21,9 @@ export class UserRepository
    */
   public async findByEmail(email: any): Promise<UserModel | null> {
     const body = {
-      match: { email },
+      term: {
+        email: email,
+      },
     };
 
     const result = await this.findOne(body);

@@ -9,30 +9,35 @@ import { UserRepository } from '../repositories/UserRepository';
 import { Client } from '@elastic/elasticsearch';
 import { IElasticsearchRepository } from '../../domain/interfaces/IElasticSearchRepository';
 import { ElasticsearchRepository } from '../repositories/ElasticSearchRepository';
+import { IEmailRepository } from '../../domain/interfaces/IEmailRepository';
+import { EmailRepository } from '../repositories/EmailRepository';
+import { IEmailSyncService } from '../../application/interfaces/IEmailSyncService';
+import { OutlookService } from '../../application/services/adapters/OutlookService';
+import { EmailSyncController } from '../../presentation/controllers/EmailSyncController';
+import { EmailSyncService } from '../../application/services/EmailSyncService';
 
 const container = new Container({ skipBaseClassChecks: true });
 
-const initializeContainer = async (esClient: Client) => {
-  // Bine Elasticsearch Client
+const initializeIocContainer = async (esClient: Client) => {
   container.bind<Client>(TYPES.ElasticsearchClient).toConstantValue(esClient);
 
-  //#region Bind Controllers
   container.bind<HealthCheckController>(HealthCheckController).toSelf();
   container.bind<AuthController>(TYPES.AuthController).to(AuthController);
-  //#endregion
+  container
+    .bind<EmailSyncController>(TYPES.EmailSyncController)
+    .to(EmailSyncController);
 
-  //#region Bind Services
   container.bind<IAuthService>(TYPES.AuthService).to(AuthService);
-  //#endregion
+  container.bind<EmailSyncService>(TYPES.EmailSyncService).to(EmailSyncService);
+  container.bind<IEmailSyncService>(TYPES.OutlookService).to(OutlookService);
 
-  //#region Bind Repositories
   container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
+  container.bind<IEmailRepository>(TYPES.EmailRepository).to(EmailRepository);
   container
     .bind<IElasticsearchRepository<any>>(TYPES.ElasticsearchRepository)
     .to(ElasticsearchRepository);
-  //#endregion
 
   return container;
 };
 
-export { container, initializeContainer };
+export { container, initializeIocContainer };

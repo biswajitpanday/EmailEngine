@@ -6,28 +6,34 @@ import { AuthController } from '../controllers/AuthController';
 const router = Router();
 const authController = container.get<AuthController>(TYPES.AuthController);
 
-// Define the type for async handlers
 type AsyncHandler = (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => Promise<void>;
 
-// Wrapper to handle async routes
 const asyncHandler =
   (fn: AsyncHandler) => (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 
 router.post(
-  '/register',
+  '/account/create',
   asyncHandler((req: Request, res: Response) =>
-    authController.register(req, res),
+    authController.createAccount(req, res),
+  ),
+);
+router.get(
+  '/auth/outlook',
+  asyncHandler((req: Request, res: Response, next: NextFunction) =>
+    authController.initiateOutlookAuth(req, res, next),
   ),
 );
 router.post(
-  '/login',
-  asyncHandler((req: Request, res: Response) => authController.login(req, res)),
+  '/auth/outlook/callback',
+  asyncHandler((req: Request, res: Response, next: NextFunction) =>
+    authController.handleOutlookCallback(req, res, next),
+  ),
 );
 
 export default router;

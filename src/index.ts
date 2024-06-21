@@ -1,13 +1,7 @@
 import 'reflect-metadata';
-import { InversifyExpressServer } from 'inversify-express-utils';
-import { container, initializeContainer } from './infrastructure/di/container';
-import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import './presentation/controllers/HealthCheckController';
-import logger from './utils/Logger';
-import { errorHandler } from './utils/ErrorHandler';
 import * as fs from 'fs';
-import initializeElasticsearch from './infrastructure/config/ElasticsearchConnection';
+import logger from './utils/Logger';
 
 const envFile =
   process.env.NODE_ENV === 'production'
@@ -19,21 +13,46 @@ if (fs.existsSync(envFile)) {
 } else {
   dotenv.config(); // Default to .env
 }
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import passport from 'passport';
+import session from 'express-session';
+import { InversifyExpressServer } from 'inversify-express-utils';
+import { initializeIocContainer } from './infrastructure/di/container';
+
+import { errorHandler } from './utils/ErrorHandler';
+import connectElasticsearch from './infrastructure/config/ElasticsearchConnection';
+// import { initializeElasticsearchIndexing } from './infrastructure/config/InitializeElasticSearchIndexing';
+import './presentation/controllers/HealthCheckController';
 
 (async () => {
   try {
     // Initialize ElasticSearch
-    const esClient = await initializeElasticsearch();
+    const esClient = await connectElasticsearch();
+
+    // Initialize ElasticSearch Indexes
+    // await initializeElasticsearchIndexing(esClient);     // todo: fix this
 
     // Initialize IOC Container
-    await initializeContainer(esClient);
+    const container = await initializeIocContainer(esClient);
 
     // Create the server
     const server = new InversifyExpressServer(container);
 
     server.setConfig((app) => {
+      app.use(cors());
       app.use(bodyParser.urlencoded({ extended: true }));
       app.use(bodyParser.json());
+      app.use(
+        session({
+          secret: 'email-engine-secret', // Replace with your own secret
+          resave: false,
+          saveUninitialized: true,
+          cookie: { secure: false }, // Use secure cookies in production
+        }),
+      );
+      app.use(passport.initialize());
+      app.use(passport.session());
     });
 
     // Set the error handling middleware
