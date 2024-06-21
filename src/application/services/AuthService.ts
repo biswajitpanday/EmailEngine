@@ -1,32 +1,20 @@
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../../infrastructure/di/types';
 import { IAuthService } from '../interfaces/IAuthService';
-//import { OAuth2Client } from 'google-auth-library';
 import bcrypt from 'bcryptjs';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
 import { instanceToPlain } from 'class-transformer';
 import logger from '../../utils/Logger';
-import { UserModel } from '../../domain/models/UserModel';
 import { AuthenticationError, ValidationError } from '../../utils/ErrorHandler';
 import { validateModel } from '../../utils/ValidateModel';
+import { UserModel } from '../../infrastructure/persistence/documents/UserModel';
 
-/**
- * AuthService class handling user registration and login
- */
 @injectable()
 class AuthService implements IAuthService {
-  //private _client: OAuth2Client;
-
   constructor(
     @inject(TYPES.UserRepository)
     private userRepository: IUserRepository,
-  ) {
-    // this._client = new OAuth2Client(
-    //   process.env.OAUTH_CLIENT_ID,
-    //   process.env.OAUTH_CLIENT_SECRET,
-    //   process.env.OAUTH_CALLBACK_URL,
-    // );
-  }
+  ) {}
 
   /**
    * Registers a new user
@@ -41,7 +29,7 @@ class AuthService implements IAuthService {
   ): Promise<Partial<UserModel>> {
     try {
       const existingUser = await this.userRepository.findByEmail(email);
-      if (existingUser?.length > 0) {
+      if (existingUser && existingUser?.email) {
         throw new ValidationError('User already exists');
       }
       const hashedPassword = await bcrypt.hash(password, 10);

@@ -1,58 +1,48 @@
 import { Client } from '@elastic/elasticsearch';
 import logger from '../../utils/Logger';
 import { ElasticSearchDocument } from '../persistence/documents/ElasticSearchDocument';
+import { PagingRequest } from '../../domain/models/PagingRequest';
+import { IPagedResponse } from '../../domain/models/IPagedResponse';
 import { IElasticsearchRepository } from '../../domain/interfaces/IElasticSearchRepository';
 
 export class ElasticsearchRepository<T extends ElasticSearchDocument>
   implements IElasticsearchRepository<T>
 {
-  protected readonly client: Client;
-  protected readonly indexName: string;
+  constructor(
+    private client: Client,
+    private indexName: string,
+  ) {}
 
-  constructor(client: Client, indexName: string) {
-    this.client = client;
-    this.indexName = indexName;
-  }
-
-  /**
-   * Creates a new document in the Elasticsearch index.
-   * @param document - The document to create.
-   * @returns The created document with the generated ID.
-   */
   public async create(document: T): Promise<T> {
     try {
-      const response = (await this.client.index({
+      const response = await this.client.index({
         index: this.indexName,
         body: document,
-      })) as any;
+        refresh: true,
+      });
 
       logger.info(
         `Document created in index ${this.indexName} with ID: ${response.body._id}`,
       );
-      return { ...document, id: response.body._id }; // Include generated ID
+      return { ...document, id: response.body._id };
     } catch (err) {
       logger.error(`Error creating document in index ${this.indexName}:`, err);
       throw new Error('Error creating document');
     }
   }
 
-  /**
-   * Searches for documents in the Elasticsearch index based on a query.
-   * @param query - The search query.
-   * @returns An array of search results.
-   */
-  public async search(query: any): Promise<any[]> {
+  public async search(query: any): Promise<T[]> {
     try {
-      const response = (await this.client.search({
+      const response = await this.client.search({
         index: this.indexName,
         body: query,
-      })) as any;
+      });
 
       logger.info(`Search query executed in index ${this.indexName}`);
       return response.body.hits.hits.map((hit: any) => ({
         ...hit._source,
         id: hit._id,
-      })); // Include source and ID in results
+      }));
     } catch (err) {
       logger.error(
         `Error executing search query in index ${this.indexName}:`,
@@ -62,24 +52,19 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
     }
   }
 
-  /**
-   * Retrieves a document by its ID from the Elasticsearch index.
-   * @param id - The ID of the document.
-   * @returns The retrieved document or null if not found.
-   */
   public async getById(id: string): Promise<T | null> {
     try {
-      const response = (await this.client.get({
+      const response = await this.client.get({
         index: this.indexName,
         id,
-      })) as any;
+      });
 
       logger.info(
         `Document retrieved from index ${this.indexName} with ID: ${id}`,
       );
       return response.body
         ? { ...response.body._source, id: response.body._id }
-        : null; // Include source and ID in result or null
+        : null;
     } catch (err: any) {
       logger.error(
         `Error retrieving document from index ${this.indexName} with ID: ${id}`,
@@ -92,19 +77,14 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
     }
   }
 
-  /**
-   * Updates a document by its ID in the Elasticsearch index.
-   * @param id - The ID of the document.
-   * @param document - The partial document to update.
-   * @returns The updated document or null if not found.
-   */
   public async update(id: string, document: Partial<T>): Promise<T | null> {
     try {
-      const updateResult = (await this.client.update({
+      const updateResult = await this.client.update({
         index: this.indexName,
         id,
-        body: { doc: document }, // Use doc for partial updates
-      })) as any;
+        body: { doc: document },
+        refresh: true,
+      });
 
       logger.info(`Document updated in index ${this.indexName} with ID: ${id}`);
       if (updateResult.body.result === 'updated') {
@@ -121,15 +101,12 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
     }
   }
 
-  /**
-   * Deletes a document by its ID from the Elasticsearch index.
-   * @param id - The ID of the document.
-   */
   public async delete(id: string): Promise<void> {
     try {
       await this.client.delete({
         index: this.indexName,
         id,
+        refresh: true,
       });
 
       logger.info(
@@ -141,6 +118,99 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
         err,
       );
       throw new Error('Error deleting document');
+    }
+  }
+
+  public async filter(
+    query?: any,
+    paging?: PagingRequest,
+    sort?: any,
+  ): Promise<IPagedResponse<T>> {
+    try {
+      const searchParams: any = {
+        index: this.indexName,
+        body: {
+          query: query || { match_all: {} },
+          sort: sort ? [sort] : undefined,
+          from: paging?.skip || 0,
+          size: paging?.limit || 10,
+        },
+      };
+
+      const response = await this.client.search(searchParams);
+
+      const list = response.body.hits.hits.map((hit: any) => ({
+        ...hit._source,
+        id: hit._id,
+      }));
+
+      const count = response.body.hits.total.value;
+
+      return { count, list };
+    } catch (err) {
+      logger.error(
+        `Failed to filter documents in index ${this.indexName}:`,
+        err,
+      );
+      throw new Error('Error filtering documents');
+    }
+  }
+
+  public async count(query: any): Promise<number> {
+    try {
+      const response = await this.client.count({
+        index: this.indexName,
+        body: { query: query || { match_all: {} } },
+      });
+
+      return response.body.count;
+    } catch (err) {
+      logger.error(`Error counting documents in index ${this.indexName}:`, err);
+      throw new Error('Error counting documents');
+    }
+  }
+
+  public async find(query: any): Promise<T[]> {
+    try {
+      const searchParams: any = {
+        index: this.indexName,
+        body: {
+          query: query || { match_all: {} },
+        },
+      };
+
+      const response = await this.client.search(searchParams);
+
+      return response.body.hits.hits.map((hit: any) => ({
+        ...hit._source,
+        id: hit._id,
+      }));
+    } catch (err) {
+      logger.error(`Failed to find documents in index ${this.indexName}:`, err);
+      throw new Error('Error finding documents');
+    }
+  }
+
+  public async findOne(query: any): Promise<T | null> {
+    try {
+      const searchParams: any = {
+        index: this.indexName,
+        body: {
+          query: query || { match_all: {} },
+          size: 1,
+        },
+      };
+
+      const response = await this.client.search(searchParams);
+
+      const hit = response.body.hits.hits[0];
+      return hit ? { ...hit._source, id: hit._id } : null;
+    } catch (err) {
+      logger.error(
+        `Failed to find one document in index ${this.indexName}:`,
+        err,
+      );
+      throw new Error('Error finding one document');
     }
   }
 }

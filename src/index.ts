@@ -1,14 +1,7 @@
 import 'reflect-metadata';
-import { InversifyExpressServer } from 'inversify-express-utils';
-import { container, initializeContainer } from './infrastructure/di/container';
-import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import './presentation/controllers/HealthCheckController';
-import logger from './utils/Logger';
-import { errorHandler } from './utils/ErrorHandler';
-import connectDB from './infrastructure/config/MongooseConnection';
 import * as fs from 'fs';
-//import initializeElasticsearch from './infrastructure/config/ElasticsearchConnection';
+import logger from './utils/Logger';
 
 const envFile =
   process.env.NODE_ENV === 'production'
@@ -21,10 +14,25 @@ if (fs.existsSync(envFile)) {
   dotenv.config(); // Default to .env
 }
 
+import bodyParser from 'body-parser';
+import { InversifyExpressServer } from 'inversify-express-utils';
+import { errorHandler } from './utils/ErrorHandler';
+import connectElasticsearch from './infrastructure/config/ElasticsearchConnection';
+import { initializeElasticSearchIndexing } from './infrastructure/config/InitializeElasticSearchIndexing';
+import { initializeIocContainer } from './infrastructure/di/container';
+
+import './presentation/controllers/HealthCheckController';
+
 (async () => {
   try {
+    // Initialize ElasticSearch
+    const esClient = await connectElasticsearch();
+
+    // Initialize ElasticSearch Indexes
+    await initializeElasticSearchIndexing(esClient); // todo: fix this
+
     // Initialize IOC Container
-    await initializeContainer();
+    const container = await initializeIocContainer(esClient);
 
     // Create the server
     const server = new InversifyExpressServer(container);
@@ -41,8 +49,6 @@ if (fs.existsSync(envFile)) {
 
     const app = server.build();
     const port = process.env.PORT || 3000;
-
-    await connectDB();
 
     app.listen(port, () => {
       logger.info(`Server is running on port ${port}`);

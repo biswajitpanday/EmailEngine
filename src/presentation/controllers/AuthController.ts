@@ -2,15 +2,15 @@ import { Request, Response } from 'express';
 import { controller, httpPost } from 'inversify-express-utils';
 import { inject } from 'inversify';
 import { TYPES } from '../../infrastructure/di/types';
-import AuthService from '../../application/services/AuthService';
 import { ValidationError, AuthenticationError } from '../../utils/ErrorHandler';
-import { UserModel } from '../../domain/models/UserModel';
 import { validateModel } from '../../utils/ValidateModel';
 import logger from '../../utils/Logger';
+import { UserModel } from '../../infrastructure/persistence/documents/UserModel';
+import { IAuthService } from '../../application/interfaces/IAuthService';
 
 @controller('/auth')
 export class AuthController {
-  constructor(@inject(TYPES.AuthService) private authService: AuthService) {}
+  constructor(@inject(TYPES.AuthService) private authService: IAuthService) {}
 
   @httpPost('/register')
   public async register(req: Request, res: Response): Promise<void> {

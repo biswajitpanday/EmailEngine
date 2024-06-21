@@ -1,6 +1,5 @@
 import { controller, httpGet } from 'inversify-express-utils';
 import { Request, Response } from 'express';
-import connectDB from '../../infrastructure/config/MongooseConnection';
 import { TYPES } from '../../infrastructure/di/types';
 import { inject } from 'inversify';
 import { Client } from '@elastic/elasticsearch';
@@ -15,20 +14,10 @@ export class HealthCheckController {
       status: 'ok',
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
-      database: await this.checkDatabaseStatus(),
       elasticsearch: await this.checkElasticsearchStatus(),
     };
 
     return res.json(healthStatus);
-  }
-
-  private async checkDatabaseStatus(): Promise<string> {
-    try {
-      await connectDB();
-      return 'Mongodb connected Successfully...';
-    } catch (error) {
-      return 'disconnected';
-    }
   }
 
   private async checkElasticsearchStatus(): Promise<string> {

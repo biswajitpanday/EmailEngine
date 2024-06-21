@@ -1,6 +1,6 @@
-import { ElasticsearchRepository } from '../../infrastructure/repositories/ElasticSearchRepository';
-import { UserModel } from '../models/UserModel';
+import { UserModel } from '../../infrastructure/persistence/documents/UserModel';
+import { IElasticsearchRepository } from './IElasticSearchRepository';
 
-export interface IUserRepository extends ElasticsearchRepository<UserModel> {
+export interface IUserRepository extends IElasticsearchRepository<UserModel> {
   findByEmail(query: any): Promise<UserModel | null>;
 }
