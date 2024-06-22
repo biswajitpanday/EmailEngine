@@ -6,14 +6,8 @@ import logger from '../../utils/Logger';
 import { UserModel } from '../../infrastructure/persistence/documents/UserModel';
 import { OAuthService } from '../../application/services/OAuthService';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
-import jwt, { JwtPayload } from 'jsonwebtoken';
-
-interface DecodedToken extends JwtPayload {
-  email?: string;
-  preferred_username?: string;
-  upn?: string;
-  unique_name?: string;
-}
+import jwt from 'jsonwebtoken';
+import IDecodedToken from '../../domain/models/IDecodedToken';
 
 @controller('/auth')
 export class AuthController {
@@ -45,7 +39,7 @@ export class AuthController {
       );
 
       if (typeof token.id_token === 'string') {
-        const decodedToken = jwt.decode(token.id_token) as DecodedToken;
+        const decodedToken = jwt.decode(token.id_token) as IDecodedToken;
 
         if (
           decodedToken &&
@@ -56,10 +50,15 @@ export class AuthController {
             const user = new UserModel(
               email,
               undefined,
-              token.access_token as string,
-              token.refresh_token as string,
+              token.access_token as any,
+              token.refresh_token as any,
             );
-            await this.userRepository.create(user);
+            const existingUser = await this.userRepository.findByEmail(email);
+            if (existingUser && existingUser?.id) {
+              await this.userRepository.update(existingUser.id, user);
+            } else {
+              await this.userRepository.create(user);
+            }
 
             res
               .status(200)
