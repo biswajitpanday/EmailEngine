@@ -61,7 +61,7 @@ import './presentation/controllers/HealthCheckController';
     const emailSyncService = container.get<EmailSyncService>(
       TYPES.EmailSyncService,
     );
-    cron.schedule('*/5 * * * *', async () => {
+    cron.schedule('*/1 * * * *', async () => {
       logger.info('Starting email synchronization task');
       await emailSyncService.syncEmails();
     });
