@@ -7,6 +7,7 @@ const TYPES = {
   AuthService: Symbol.for('AuthService'),
   OAuthService: Symbol.for('OAuthService'),
   AuthController: Symbol.for('AuthController'),
+  ElasticSearchController: Symbol.for('ElasticSearchController'),
 };
 
 export { TYPES };
