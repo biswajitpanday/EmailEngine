@@ -8,6 +8,7 @@ import logger from '../../utils/Logger';
 import { AuthenticationError, ValidationError } from '../../utils/ErrorHandler';
 import { validateModel } from '../../utils/ValidateModel';
 import { UserModel } from '../../infrastructure/persistence/documents/UserModel';
+import AxiosWrapper from '../../utils/AxiosWrapper';
 
 @injectable()
 class AuthService implements IAuthService {
@@ -15,14 +16,7 @@ class AuthService implements IAuthService {
     @inject(TYPES.UserRepository)
     private userRepository: IUserRepository,
   ) {}
-
-  /**
-   * Registers a new user
-   * @param email - User's email address
-   * @param password - User's password
-   * @returns The created user
-   * @throws ValidationError if the user already exists
-   */
+  // Example code to test registration
   public async register(
     email: string,
     password: string,
@@ -44,13 +38,7 @@ class AuthService implements IAuthService {
     }
   }
 
-  /**
-   * Logs in a user
-   * @param email - User's email address
-   * @param password - User's password
-   * @returns The authenticated user
-   * @throws AuthenticationError if the credentials are invalid
-   */
+  // Example code to test login
   public async login(
     email: string,
     password: string,
@@ -70,6 +58,20 @@ class AuthService implements IAuthService {
     } catch (error) {
       logger.error('Error during user login:', error);
       throw error;
+    }
+  }
+
+  // Example code to test axios wrapper.
+  public async fetchEmails(accessToken: string): Promise<any[]> {
+    const axiosWrapper = new AxiosWrapper('https://graph.microsoft.com');
+    try {
+      const response = await axiosWrapper.get('/v1.0/me/messages', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      return response.data.value;
+    } catch (error) {
+      logger.error('Error fetching emails:', error);
+      throw new Error('Failed to fetch emails');
     }
   }
 }

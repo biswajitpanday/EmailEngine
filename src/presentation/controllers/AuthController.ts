@@ -1,52 +1,79 @@
 import { Request, Response } from 'express';
-import { controller, httpPost } from 'inversify-express-utils';
+import { controller, httpGet } from 'inversify-express-utils';
 import { inject } from 'inversify';
 import { TYPES } from '../../infrastructure/di/types';
-import { ValidationError, AuthenticationError } from '../../utils/ErrorHandler';
-import { validateModel } from '../../utils/ValidateModel';
 import logger from '../../utils/Logger';
 import { UserModel } from '../../infrastructure/persistence/documents/UserModel';
-import { IAuthService } from '../../application/interfaces/IAuthService';
+import { OAuthService } from '../../application/services/OAuthService';
+import { IUserRepository } from '../../domain/interfaces/IUserRepository';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+
+interface DecodedToken extends JwtPayload {
+  email?: string;
+  preferred_username?: string;
+  upn?: string;
+  unique_name?: string;
+}
 
 @controller('/auth')
 export class AuthController {
-  constructor(@inject(TYPES.AuthService) private authService: IAuthService) {}
+  constructor(
+    @inject(TYPES.OAuthService) private oAuthService: OAuthService,
+    @inject(TYPES.UserRepository) private userRepository: IUserRepository,
+  ) {}
 
-  @httpPost('/register')
-  public async register(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, password } = req.body;
-      const user = await this.authService.register(email, password);
-      res.status(201).json(user);
-    } catch (error) {
-      logger.error('Error during registration:', error);
-      this.handleError(res, error);
-    }
+  @httpGet('/outlook')
+  public async redirectToOutlook(req: Request, res: Response): Promise<void> {
+    const redirectUri = `${process.env.APP_URL}/auth/outlook/callback`;
+    const authorizationUrl = this.oAuthService.getAuthorizationUrl(redirectUri);
+    res.redirect(authorizationUrl);
   }
 
-  @httpPost('/login')
-  public async login(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, password } = req.body;
-      const userModel = new UserModel(email, password);
-      await validateModel(userModel);
-      const user = await this.authService.login(email, password);
-      res.status(200).json(user);
-    } catch (error) {
-      logger.error('Error during login:', error);
-      this.handleError(res, error);
-    }
-  }
+  @httpGet('/outlook/callback')
+  public async handleOutlookCallback(
+    // TODO: MOVE THIS LOGIC TO SEPARATE SERVICE OR PROVIDER
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    const { code } = req.query;
+    const redirectUri = `${process.env.APP_URL}/auth/outlook/callback`;
 
-  private handleError(res: Response, error: unknown): void {
-    if (error instanceof ValidationError) {
-      res.status(400).json({ message: error.message });
-    } else if (error instanceof AuthenticationError) {
-      res.status(401).json({ message: error.message });
-    } else if (error instanceof Error) {
-      res.status(500).json({ message: error.message });
-    } else {
-      res.status(500).json({ message: 'Unknown error occurred' });
+    try {
+      const token = await this.oAuthService.getTokenFromCode(
+        code as string,
+        redirectUri,
+      );
+
+      if (typeof token.id_token === 'string') {
+        const decodedToken = jwt.decode(token.id_token) as DecodedToken;
+
+        if (
+          decodedToken &&
+          (decodedToken.preferred_username || decodedToken.email)
+        ) {
+          const email = decodedToken.email || decodedToken.preferred_username;
+          if (email) {
+            const user = new UserModel(
+              email,
+              undefined,
+              token.access_token as string,
+              token.refresh_token as string,
+            );
+            await this.userRepository.create(user);
+
+            res
+              .status(200)
+              .json({ message: 'Account linked successfully', user });
+          } else {
+            throw new Error('Email not found in token');
+          }
+        }
+      } else {
+        throw new Error('Invalid id_token type');
+      }
+    } catch (error) {
+      logger.error('OAuth callback error', error);
+      res.status(500).json({ error: 'OAuth callback failed' });
     }
   }
 }
