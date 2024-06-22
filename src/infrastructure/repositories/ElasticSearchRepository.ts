@@ -175,7 +175,7 @@ export class ElasticsearchRepository<T extends ElasticSearchDocument>
       const searchParams: any = {
         index: this.indexName,
         body: {
-          query: query || { match_all: {} },
+          query: query && Object.keys(query).length ? query : { match_all: {} },
         },
       };
 
