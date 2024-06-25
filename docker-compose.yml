@@ -10,9 +10,9 @@ services:
       - "9200:9200"
       - "9300:9300"
 
-  app:
+  backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
@@ -25,7 +25,16 @@ services:
       - elasticsearch
     command: npm run dev
     volumes:
-      - .:/usr/src/app  
+      - ./backend:/usr/src/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
 
 volumes:
   es-data:
