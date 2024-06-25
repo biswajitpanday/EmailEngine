@@ -1,13 +1,16 @@
-import React from 'react';
-import { useMsal } from "@azure/msal-react";
+import React from "react";
+import AxiosWrapper from "../utils/AxiosWrapper";
 
 const AddAccount: React.FC = () => {
-  const { instance } = useMsal();
+  const axiosWrapper = new AxiosWrapper('http://localhost:3000/api/');
 
-  const handleAddAccount = () => {
-    instance.loginRedirect({
-      scopes: ["Mail.Read"],
-    });
+  const handleAddAccount = async () => {
+    try {
+      const response = await axiosWrapper.get("auth/login");
+      window.location.href = response.data.url;
+    } catch (error) {
+      console.error("Error adding account", error);
+    }
   };
 
   return (
