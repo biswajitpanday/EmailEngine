@@ -18,8 +18,7 @@ export class AuthController {
 
   @httpGet('/outlook')
   public async redirectToOutlook(req: Request, res: Response): Promise<void> {
-    const redirectUri = `${process.env.APP_URL}/auth/outlook/callback`;
-    const authorizationUrl = this.oAuthService.getAuthorizationUrl(redirectUri);
+    const authorizationUrl = this.oAuthService.getAuthorizationUrl();
     res.redirect(authorizationUrl);
   }
 
@@ -30,13 +29,17 @@ export class AuthController {
     res: Response,
   ): Promise<void> {
     const { code } = req.query;
-    const redirectUri = `${process.env.APP_URL}/auth/outlook/callback`;
+
+    logger.info(`Received authorization code: ${code}`);
+
+    if (!code) {
+      res.status(400).json({ error: 'Authorization code is missing' });
+      return;
+    }
 
     try {
-      const token = await this.oAuthService.getTokenFromCode(
-        code as string,
-        redirectUri,
-      );
+      const token = await this.oAuthService.getTokenFromCode(code as string);
+      logger.info(`Access Token: ${token.access_token}`);
 
       if (typeof token.id_token === 'string') {
         const decodedToken = jwt.decode(token.id_token) as IDecodedToken;
@@ -60,9 +63,12 @@ export class AuthController {
               await this.userRepository.create(user);
             }
 
-            res
-              .status(200)
-              .json({ message: 'Account linked successfully', user });
+            // res
+            //   .status(200)
+            //   .json({ message: 'Account linked successfully', user });
+            res.redirect(
+              `${process.env.FRONTEND_URL}/auth/outlook/callback?code=${code}`,
+            );
           } else {
             throw new Error('Email not found in token');
           }
@@ -71,7 +77,7 @@ export class AuthController {
         throw new Error('Invalid id_token type');
       }
     } catch (error) {
-      logger.error('OAuth callback error', error);
+      logger.error('OAuth callback error');
       res.status(500).json({ error: 'OAuth callback failed' });
     }
   }
