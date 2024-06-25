@@ -20,7 +20,8 @@ export class OAuthService {
     });
   }
 
-  public getAuthorizationUrl(redirectUri: string): string {
+  public getAuthorizationUrl(): string {
+    const redirectUri = `${process.env.FRONTEND_URL}/auth/outlook/callback`;
     const authorizationUri = this.client.authorizeURL({
       redirect_uri: redirectUri,
       scope: [
@@ -34,7 +35,8 @@ export class OAuthService {
     return authorizationUri;
   }
 
-  public async getTokenFromCode(code: string, redirectUri: string) {
+  public async getTokenFromCode(code: string) {
+    const redirectUri = `${process.env.FRONTEND_URL}/auth/outlook/callback`;
     const tokenParams = {
       code,
       redirect_uri: redirectUri,

@@ -53,6 +53,7 @@ class AxiosWrapper {
         if (error.response) {
           logger.error('Response Error:', {
             status: error.response.status,
+            //data: error.response.data,
             data: error.response.data,
           });
         } else {

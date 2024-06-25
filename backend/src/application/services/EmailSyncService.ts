@@ -103,7 +103,7 @@ export class EmailSyncService {
         null,
         {
           params: {
-            grant_type: 'refresh_token',
+            grant_type: 'refresh_token', // authorization_code
             refresh_token: refreshToken,
             client_id: process.env.OUTLOOK_CLIENT_ID,
             client_secret: process.env.OUTLOOK_CLIENT_SECRET,
