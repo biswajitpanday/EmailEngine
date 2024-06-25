@@ -1,21 +1,22 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { MsalProvider } from "@azure/msal-react";
+import { msalConfig } from './msalConfig';
 import App from './App';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import AuthCallback from './components/AuthCallback';
+import { PublicClientApplication } from '@azure/msal-browser';
 
-const container = document.getElementById('root');
-if (container) {
-  const root = ReactDOM.createRoot(container);
-  root.render(
-    <React.StrictMode>
-      <Router>
-        <Routes>
-          <Route path="/auth/outlook/callback" element={<AuthCallback />} />
-          <Route path="/" element={<App />} />
-        </Routes>
-      </Router>
-    </React.StrictMode>
-  );
-}
+const msalInstance = new PublicClientApplication(msalConfig);
+
+const root = ReactDOM.createRoot(
+  document.getElementById('root') as HTMLElement
+);
+
+root.render(
+  <MsalProvider instance={msalInstance}>
+    <Router>
+      <App />
+    </Router>
+  </MsalProvider>
+);
+
