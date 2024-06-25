@@ -15,6 +15,9 @@ if (fs.existsSync(envFile)) {
 }
 
 import bodyParser from 'body-parser';
+import cors from 'cors';
+import session from 'express-session';
+import cookieParser from 'cookie-parser';
 import cron from 'node-cron';
 import { InversifyExpressServer } from 'inversify-express-utils';
 import { errorHandler } from './utils/ErrorHandler';
@@ -40,7 +43,23 @@ import './presentation/controllers/HealthCheckController';
     // Create the server
     const server = new InversifyExpressServer(container);
 
+    logger.info(`Cors Origin: ${process.env.CORS_ORIGIN}`);
     server.setConfig((app) => {
+      app.use(
+        cors({
+          origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+          credentials: true,
+        }),
+      );
+      app.use(cookieParser());
+      app.use(
+        session({
+          secret: 'emailsherlockengine',
+          resave: false,
+          saveUninitialized: true,
+          cookie: { secure: process.env.NODE_ENV === 'production' },
+        }),
+      );
       app.use(bodyParser.urlencoded({ extended: true }));
       app.use(bodyParser.json());
     });
