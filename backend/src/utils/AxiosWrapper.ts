@@ -25,14 +25,12 @@ class AxiosWrapper {
   private initializeRequestInterceptor() {
     this.axiosInstance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        // Log request details
         logger.info(
           `Starting Request: ${config.method?.toUpperCase()} ${config.url}`,
         );
         return config;
       },
       (error: AxiosError) => {
-        // Log request error
         logger.error('Request Error:', error);
         return Promise.reject(error);
       },
@@ -42,18 +40,15 @@ class AxiosWrapper {
   private initializeResponseInterceptor() {
     this.axiosInstance.interceptors.response.use(
       (response: AxiosResponse) => {
-        // Log response details
         logger.info(`Response: ${response.status} ${response.statusText}`, {
           data: response.data,
         });
         return response;
       },
       (error: AxiosError) => {
-        // Log response error
         if (error.response) {
           logger.error('Response Error:', {
             status: error.response.status,
-            //data: error.response.data,
             data: error.response.data,
           });
         } else {

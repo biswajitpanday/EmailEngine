@@ -18,14 +18,14 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
-import cron from 'node-cron';
+// import cron from 'node-cron';
 import { InversifyExpressServer } from 'inversify-express-utils';
 import { errorHandler } from './utils/ErrorHandler';
 import connectElasticsearch from './infrastructure/config/ElasticsearchConnection';
 import { initializeElasticSearchIndexing } from './infrastructure/config/InitializeElasticSearchIndexing';
 import { initializeIocContainer } from './infrastructure/di/container';
-import { TYPES } from './infrastructure/di/types';
-import { EmailSyncService } from './application/services/EmailSyncService';
+// import { TYPES } from './infrastructure/di/types';
+// import { EmailSyncService } from './application/services/EmailSyncService';
 
 import './presentation/controllers/HealthCheckController';
 
@@ -47,7 +47,7 @@ import './presentation/controllers/HealthCheckController';
     server.setConfig((app) => {
       app.use(
         cors({
-          origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+          origin: process.env.CORS_ORIGIN || '*',
           credentials: true,
         }),
       );
@@ -77,13 +77,13 @@ import './presentation/controllers/HealthCheckController';
     });
 
     // Schedule email synchronization task
-    const emailSyncService = container.get<EmailSyncService>(
-      TYPES.EmailSyncService,
-    );
-    cron.schedule('*/1 * * * *', async () => {
-      logger.info('Starting email synchronization task');
-      await emailSyncService.syncEmails();
-    });
+    // const emailSyncService = container.get<EmailSyncService>(
+    //   TYPES.EmailSyncService,
+    // );
+    // cron.schedule('*/1 * * * *', async () => {
+    //   logger.info('Starting email synchronization task');
+    //   await emailSyncService.syncEmails();
+    // });
   } catch (error: unknown) {
     if (error instanceof Error) {
       logger.error('Failed to start the application', {
