@@ -1,5 +1,6 @@
 import { Client } from '@elastic/elasticsearch';
 import logger from '../../utils/Logger';
+import AppConst from '../../utils/Constants';
 //import fs from 'fs';
 
 const DEFAULT_ELASTICSEARCH_HOST = 'http://localhost:9200';
@@ -13,14 +14,14 @@ const connectElasticsearch = async (): Promise<Client> => {
     logger.info(`Connecting to Elasticsearch...`);
 
     const esClientOptions: any = {
-      node: process.env.ELASTICSEARCH_HOST || DEFAULT_ELASTICSEARCH_HOST,
+      node: AppConst.ElasticSearchHost || DEFAULT_ELASTICSEARCH_HOST,
       auth: {
-        username: process.env.ELASTICSEARCH_USERNAME || '',
-        password: process.env.ELASTICSEARCH_PASSWORD || '',
+        password: AppConst.ElasticSearchPassword,
+        username: AppConst.ElasticSearchUserName,
       },
     };
 
-    // if (process.env.NODE_ENV === 'production') {
+    // if (AppConst.NodeEnv === 'production') {
     //   const ca = fs.readFileSync('./certs/elasticsearch.crt');
     //   const httpsAgent = new https.Agent({
     //     ca,
