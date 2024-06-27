@@ -1,4 +1,7 @@
-.landing-page {
+body {
+  font-family: "Arial", sans-serif;
+}
+.auth-landing-page {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -23,49 +26,21 @@
   margin: 2rem 0;
 }
 
-.auth-button {
-  margin: 0 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #0078d4;
-  color: white;
-  font-size: 1rem;
-  cursor: pointer;
+/* Email Page */
+.sidebar {
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding-top: 20px;
+  width: 200px;
 }
 
-.auth-button:hover {
-  background-color: #005a9e;
+.main-content {
+  margin-left: 200px;
+  padding: 20px;
 }
 
-.auth-form {
-  display: flex;
-  flex-direction: column;
-}
-
-.input-field {
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.submit-button {
-  padding: 0.75rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #0078d4;
-  color: white;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.footer-links {
-  margin-top: 1rem;
-}
-
-.footer-links a {
-  margin: 0 0.5rem;
-  color: #0078d4;
-  text-decoration: none;
+.mr-2 {
+  margin-right: 0.5rem;
 }
