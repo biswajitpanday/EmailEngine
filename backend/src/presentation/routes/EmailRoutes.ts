@@ -1,10 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { container } from '../../infrastructure/di/container';
 import { TYPES } from '../../infrastructure/di/types';
-import { AuthController } from '../controllers/AuthController';
+import { EmailController } from '../controllers/EmailController';
 
 const router = Router();
-const authController = container.get<AuthController>(TYPES.AuthController);
+const emailController = container.get<EmailController>(TYPES.EmailController);
 
 type AsyncHandler = (
   req: Request,
@@ -17,9 +17,11 @@ const asyncHandler =
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 
-router.post(
-  '/login',
-  asyncHandler((req: Request, res: Response) => authController.login(req, res)),
+router.get(
+  '/get',
+  asyncHandler((req: Request, res: Response) =>
+    emailController.getEmails(req, res),
+  ),
 );
 
 export default router;
