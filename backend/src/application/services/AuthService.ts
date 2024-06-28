@@ -1,19 +1,16 @@
 import { injectable } from 'inversify';
 import { IAuthService } from '../interfaces/IAuthService';
 import { OnBehalfOfCredential } from '@azure/identity';
+import AppConst from '../../utils/Constants';
 
 @injectable()
 class AuthService implements IAuthService {
   public async getOnBehalfToken(idToken: string): Promise<string> {
-    const tenantId = 'common';
-    const clientId = process.env.OUTLOOK_CLIENT_ID || '';
-    const clientSecret = process.env.OUTLOOK_CLIENT_SECRET || '';
-
     try {
       const oboCredential = new OnBehalfOfCredential({
-        tenantId,
-        clientId,
-        clientSecret,
+        tenantId: 'common',
+        clientId: AppConst.OutlookClientId,
+        clientSecret: AppConst.OutlookClientSecret,
         userAssertionToken: idToken,
       });
       const tokenResponse = await oboCredential.getToken([

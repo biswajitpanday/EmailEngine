@@ -4,6 +4,7 @@ import { ElasticsearchRepository } from './ElasticSearchRepository';
 import { Client } from '@elastic/elasticsearch';
 import logger from '../../utils/Logger';
 import { UserModel } from '../persistence/documents/UserModel';
+import AppConst from '../../utils/Constants';
 
 @injectable()
 export class UserRepository
@@ -11,7 +12,7 @@ export class UserRepository
   implements IUserRepository
 {
   constructor() {
-    super(new Client({ node: process.env.ELASTICSEARCH_HOST }), 'users');
+    super(new Client({ node: AppConst.ElasticSearchHost }), 'users');
   }
 
   /**

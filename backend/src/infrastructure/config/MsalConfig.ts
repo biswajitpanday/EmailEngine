@@ -1,10 +1,11 @@
 import { LogLevel } from '@azure/msal-node';
+import AppConst from '../../utils/Constants';
 
 const msalConfig = {
   auth: {
-    clientId: process.env.OUTLOOK_CLIENT_ID || '',
+    clientId: AppConst.OutlookClientId,
     authority: 'https://login.microsoftonline.com/common',
-    clientSecret: process.env.OUTLOOK_CLIENT_SECRET || '',
+    clientSecret: AppConst.OutlookClientSecret,
   },
   system: {
     loggerOptions: {
