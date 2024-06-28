@@ -3,6 +3,7 @@ import { ElasticsearchRepository } from './ElasticSearchRepository';
 import { Client } from '@elastic/elasticsearch';
 import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncRepository';
 import { EmailSyncModel } from '../persistence/documents/EmailSyncModel';
+import AppConst from '../../utils/Constants';
 
 @injectable()
 export class EmailSyncRepository
@@ -10,6 +11,6 @@ export class EmailSyncRepository
   implements IEmailSyncRepository
 {
   constructor() {
-    super(new Client({ node: process.env.ELASTICSEARCH_HOST }), 'emails');
+    super(new Client({ node: AppConst.ElasticSearchHost }), 'emails');
   }
 }

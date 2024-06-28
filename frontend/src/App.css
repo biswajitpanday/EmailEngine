@@ -1,6 +1,3 @@
-body {
-  font-family: "Arial", sans-serif;
-}
 .auth-landing-page {
   display: flex;
   justify-content: center;
@@ -20,27 +17,16 @@ body {
 .app-title {
   text-transform: uppercase;
   margin-bottom: 4rem;
+  text-align: center;
 }
 
 .auth-btn-container {
   margin: 2rem 0;
 }
 
-/* Email Page */
-.sidebar {
+.center-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  padding-top: 20px;
-  width: 200px;
-}
-
-.main-content {
-  margin-left: 200px;
-  padding: 20px;
-}
-
-.mr-2 {
-  margin-right: 0.5rem;
 }

@@ -18,16 +18,14 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
-// import cron from 'node-cron';
 import { InversifyExpressServer } from 'inversify-express-utils';
 import { errorHandler } from './utils/ErrorHandler';
 import connectElasticsearch from './infrastructure/config/ElasticsearchConnection';
 import { initializeElasticSearchIndexing } from './infrastructure/config/InitializeElasticSearchIndexing';
 import { initializeIocContainer } from './infrastructure/di/container';
-// import { TYPES } from './infrastructure/di/types';
-// import { EmailSyncService } from './application/services/EmailSyncService';
 
 import './presentation/controllers/HealthCheckController';
+import AppConst from './utils/Constants';
 
 (async () => {
   try {
@@ -43,11 +41,11 @@ import './presentation/controllers/HealthCheckController';
     // Create the server
     const server = new InversifyExpressServer(container);
 
-    logger.info(`Cors Origin: ${process.env.CORS_ORIGIN}`);
+    logger.info(`Cors Origin: ${AppConst.CorsOrigin}`);
     server.setConfig((app) => {
       app.use(
         cors({
-          origin: process.env.CORS_ORIGIN || '*',
+          origin: AppConst.CorsOrigin || '*',
           credentials: true,
         }),
       );
@@ -57,7 +55,7 @@ import './presentation/controllers/HealthCheckController';
           secret: 'emailsherlockengine',
           resave: false,
           saveUninitialized: true,
-          cookie: { secure: process.env.NODE_ENV === 'production' },
+          cookie: { secure: AppConst.NodeEnv === 'production' },
         }),
       );
       app.use(bodyParser.urlencoded({ extended: true }));
@@ -70,20 +68,11 @@ import './presentation/controllers/HealthCheckController';
     });
 
     const app = server.build();
-    const port = process.env.PORT || 3000;
+    const port = AppConst.Port || 3000;
 
     app.listen(port, () => {
       logger.info(`Server is running on port ${port}`);
     });
-
-    // Schedule email synchronization task
-    // const emailSyncService = container.get<EmailSyncService>(
-    //   TYPES.EmailSyncService,
-    // );
-    // cron.schedule('*/1 * * * *', async () => {
-    //   logger.info('Starting email synchronization task');
-    //   await emailSyncService.syncEmails();
-    // });
   } catch (error: unknown) {
     if (error instanceof Error) {
       logger.error('Failed to start the application', {

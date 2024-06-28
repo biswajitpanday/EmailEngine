@@ -2,22 +2,7 @@ import React, { useEffect, useState } from "react";
 import AxiosWrapper from "../utils/AxiosWrapper";
 import { useMsal } from "@azure/msal-react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "./Sidebar";
-
-interface Email {
-  id: string;
-  subject: string;
-  sender: Sender;
-}
-
-interface Sender {
-  emailAddress: EmailAddress;
-}
-
-interface EmailAddress {
-  address: string;
-  name: string;
-}
+import { Email } from "../types/EmailType";
 
 const EmailPage: React.FC = () => {
   const [emails, setEmails] = useState<Email[]>([]);
@@ -49,36 +34,30 @@ const EmailPage: React.FC = () => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="main-content">
-      <Sidebar />
+    <div className="container main-content">
       <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 className="h2">Email Data Synchronization</h1>
-        <p className="lead">Status: {syncStatus}</p>
+        <p className="lead"><small>Sync-Status: {syncStatus}</small></p>
       </div>
       <div className="email-list">
-        <ul className="list-group">
-          {emails.map((email) => (
-            <li className="list-group-item email-item" key={email.id}>
-              <strong>{email.subject}</strong> -{" "}
-              {email.sender.emailAddress.name}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="email-details mt-4">
-        <h2>Email Subject</h2>
-        <p>
-          From: <span id="emailSender">Sender Name</span>
-        </p>
-        <p>
-          To: <span id="emailRecipient">Recipient Name</span>
-        </p>
-        <p>
-          Date: <span id="emailDate">Email Date</span>
-        </p>
-        <div id="emailBody">
-          <p>Email body content goes here...</p>
-        </div>
+        <table className="table table-bordered table-striped">
+          <thead className="thead-light">
+            <tr>
+              <th scope="col">Subject line</th>
+              <th scope="col">Sender name</th>
+            </tr>
+          </thead>
+          <tbody>
+            {emails.map((email) => (
+              <tr key={email.id}>
+                <td>
+                  <strong>{email.subject}</strong>
+                </td>
+                <td>{email.sender.emailAddress.name}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
