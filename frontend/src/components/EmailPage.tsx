@@ -7,7 +7,7 @@ import { Email } from "../types/EmailType";
 const EmailPage: React.FC = () => {
   const [emails, setEmails] = useState<Email[]>([]);
   const [syncStatus, setSyncStatus] = useState("Not Started");
-  const axiosWrapper = new AxiosWrapper("https://localhost:3000/api/", true);
+  const axiosWrapper = new AxiosWrapper("http://localhost:3000/api/", true);
 
   const navigate = useNavigate();
   const { accounts } = useMsal();
