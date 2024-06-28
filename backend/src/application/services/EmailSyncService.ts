@@ -1,10 +1,19 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { IEmailSyncService } from '../interfaces/IEmailSyncService';
 import crypto from 'crypto';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { EmailSyncModel } from '../../infrastructure/persistence/documents/EmailSyncModel';
+import logger from '../../utils/Logger';
+import { TYPES } from '../../infrastructure/di/types';
+import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncRepository';
 
 @injectable()
 export class EmailSyncService implements IEmailSyncService {
+  constructor(
+    @inject(TYPES.EmailSyncRepository)
+    private emailSyncRepository: IEmailSyncRepository,
+  ) {}
+
   public async synchronizeEmails(accessToken: string): Promise<void> {
     const client = Client.init({
       authProvider: (done) => {
@@ -16,7 +25,10 @@ export class EmailSyncService implements IEmailSyncService {
       const response = await client.api('/me/messages').get();
       const emails = response.value;
       await this.createSubscription(accessToken);
-      //await this.storeEmail('biswajit.panday@live.com', emails);
+
+      const user = await client.api('/me').get();
+      const userEmail = user.mail || user.userPrincipalName;
+      await this.storeEmail(userEmail, emails);
       return emails;
     } catch (error: any) {
       throw new Error(`Error synchronizing emails: ${error?.message}`);
@@ -29,9 +41,7 @@ export class EmailSyncService implements IEmailSyncService {
         done(null, accessToken);
       },
     });
-
     const mailbox = 'user@domain.com'; // Replace with the actual mailbox
-
     const subscription = {
       changeType: 'updated',
       notificationUrl: 'https://localhost:3000/listen',
@@ -50,23 +60,32 @@ export class EmailSyncService implements IEmailSyncService {
     }
   }
 
-  // private async storeEmail(userEmail: string, email: any): Promise<void> {
-  //   const emailDocument = new EmailSyncModel(
-  //     userEmail,
-  //     email.id,
-  //     email.subject,
-  //     email.bodyPreview,
-  //     email.from.emailAddress.address,
-  //     email.toRecipients.map(
-  //       (recipient: any) => recipient.emailAddress.address,
-  //     ),
-  //     email.receivedDateTime,
-  //   );
-  //   try {
-  //     await this.emailSyncRepository.create(emailDocument);
-  //     logger.info(`Email stored with ID: ${email.id}`);
-  //   } catch (error) {
-  //     logger.error(`Error storing email with ID: ${email.id}`, error);
-  //   }
-  // }
+  private async storeEmail(userEmail: string, emails: any[]): Promise<void> {
+    try {
+      emails.forEach(async (email: any) => {
+        const emailId = email.id;
+        const emailDocument = new EmailSyncModel(
+          userEmail,
+          emailId,
+          email.subject,
+          email.bodyPreview,
+          email.from.emailAddress.address,
+          email.toRecipients.map(
+            (recipient: any) => recipient.emailAddress.address,
+          ),
+          email.receivedDateTime,
+        );
+        const body = {
+          match: { emailId },
+        };
+        const existingEmail = await this.emailSyncRepository.findOne(body);
+        if (!existingEmail) {
+          await this.emailSyncRepository.create(emailDocument);
+        }
+        logger.info(`Email stored with ID: ${email.id}`);
+      });
+    } catch (error: any) {
+      logger.error(`Error storing email `, error.message);
+    }
+  }
 }

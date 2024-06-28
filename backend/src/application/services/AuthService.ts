@@ -24,14 +24,14 @@ class AuthService implements IAuthService {
       const tokenResponse = await oboCredential.getToken([
         'https://graph.microsoft.com/.default',
       ]);
-      this.StoreUser(tokenResponse.token);
+      await this.storeUser(tokenResponse.token);
       return tokenResponse.token;
     } catch (error: any) {
       throw error?.message;
     }
   }
 
-  private async StoreUser(token: string): Promise<void> {
+  private async storeUser(token: string): Promise<void> {
     const client = Client.init({
       authProvider: (done) => {
         done(null, token);
