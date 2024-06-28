@@ -14,6 +14,7 @@ if (fs.existsSync(envFile)) {
   dotenv.config(); // Default to .env
 }
 
+// import https from 'https';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import session from 'express-session';
@@ -70,6 +71,12 @@ import AppConst from './utils/Constants';
     const app = server.build();
     const port = AppConst.Port || 3000;
 
+    // const httpsOptions = {
+    //   key: fs.readFileSync('key.pem'),
+    //   cert: fs.readFileSync('cert.pem'),
+    // };
+
+    // https.createServer(httpsOptions, app).listen(port, () => {
     app.listen(port, () => {
       logger.info(`Server is running on port ${port}`);
     });
