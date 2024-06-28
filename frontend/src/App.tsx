@@ -11,23 +11,18 @@ const App: React.FC = () => {
   return (
     <>
       {!isAuthenticated && (
-        <>
-          <div className="auth-landing-page">
-            <div className="auth-container">
-              <div className="button-container">
-                <AppRoutes />
-              </div>
+        <div className="auth-landing-page">
+          <div className="auth-container">
+            <div className="button-container">
+              <AppRoutes />
             </div>
           </div>
-        </>
+        </div>
       )}
       {isAuthenticated && (
-        <Container fluid>
+        <Container>
           <Row>
-            {/* <Col xs={2} id="sidebar-wrapper">
-              <Sidebar />
-            </Col> */}
-            <Col xs={10} id="page-content-wrapper">
+            <Col xs={12} id="page-content-wrapper">
               <AppRoutes />
             </Col>
           </Row>
