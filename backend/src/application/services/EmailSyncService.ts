@@ -6,6 +6,7 @@ import { EmailSyncModel } from '../../infrastructure/persistence/documents/Email
 import logger from '../../utils/Logger';
 import { TYPES } from '../../infrastructure/di/types';
 import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncRepository';
+import NgrokService from '../../infrastructure/config/NgrokService';
 
 @injectable()
 export class EmailSyncService implements IEmailSyncService {
@@ -24,28 +25,32 @@ export class EmailSyncService implements IEmailSyncService {
     try {
       const response = await client.api('/me/messages').get();
       const emails = response.value;
-      await this.createSubscription(accessToken);
-
       const user = await client.api('/me').get();
       const userEmail = user.mail || user.userPrincipalName;
       await this.storeEmail(userEmail, emails);
+      await this.createSubscription(accessToken, userEmail);
       return emails;
     } catch (error: any) {
       throw new Error(`Error synchronizing emails: ${error?.message}`);
     }
   }
 
-  public async createSubscription(accessToken: string): Promise<void> {
+  public async createSubscription(
+    accessToken: string,
+    userEmail: string,
+  ): Promise<void> {
     const client = Client.init({
       authProvider: (done) => {
         done(null, accessToken);
       },
     });
-    const mailbox = 'user@domain.com'; // Replace with the actual mailbox
+
+    const ngrokService = NgrokService.getInstance();
+    const ngrokUrl = ngrokService.url;
     const subscription = {
       changeType: 'updated',
-      notificationUrl: 'https://localhost:3000/listen',
-      resource: `users/${mailbox}/messages`,
+      notificationUrl: `${ngrokUrl}/api/email/listen`,
+      resource: `users/${userEmail}/messages`,
       expirationDateTime: new Date(
         Date.now() + 2 * 24 * 60 * 60 * 1000,
       ).toISOString(), // 2 days from now
@@ -54,9 +59,9 @@ export class EmailSyncService implements IEmailSyncService {
 
     try {
       const response = await client.api('/subscriptions').post(subscription);
-      console.log('Subscription created: ', response);
+      logger.info('Subscription created: ', response);
     } catch (error) {
-      console.error('Error creating subscription: ', error);
+      logger.error('Error creating subscription: ', error);
     }
   }
 

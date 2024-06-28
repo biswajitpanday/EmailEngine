@@ -14,7 +14,6 @@ if (fs.existsSync(envFile)) {
   dotenv.config(); // Default to .env
 }
 
-// import https from 'https';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import session from 'express-session';
@@ -27,9 +26,15 @@ import { initializeIocContainer } from './infrastructure/di/container';
 
 import './presentation/controllers/HealthCheckController';
 import AppConst from './utils/Constants';
+import NgrokService from './infrastructure/config/NgrokService';
 
 (async () => {
   try {
+    // Initialize ngrok
+    const ngrokService = NgrokService.getInstance();
+    const ngrokUrl = await ngrokService.connect(3000);
+    logger.info(`Public URL (NGROK): ${ngrokUrl}`);
+
     // Initialize ElasticSearch
     const esClient = await connectElasticsearch();
 
@@ -71,12 +76,6 @@ import AppConst from './utils/Constants';
     const app = server.build();
     const port = AppConst.Port || 3000;
 
-    // const httpsOptions = {
-    //   key: fs.readFileSync('key.pem'),
-    //   cert: fs.readFileSync('cert.pem'),
-    // };
-
-    // https.createServer(httpsOptions, app).listen(port, () => {
     app.listen(port, () => {
       logger.info(`Server is running on port ${port}`);
     });

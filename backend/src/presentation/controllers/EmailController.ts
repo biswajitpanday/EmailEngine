@@ -1,4 +1,4 @@
-import { controller, httpGet } from 'inversify-express-utils';
+import { controller, httpGet, httpPost } from 'inversify-express-utils';
 import { Request, Response } from 'express';
 import { TYPES } from '../../infrastructure/di/types';
 import { inject } from 'inversify';
@@ -22,6 +22,15 @@ export class EmailController {
     }
   }
 
+  @httpPost('/listen')
+  public async listen(req: Request, res: Response): Promise<void> {
+    if (req.query.validationToken) {
+      res.send(req.query.validationToken); // Validate the webhook
+    } else {
+      console.log('Received notification:', req.body); // Process notifications
+      res.sendStatus(202);
+    }
+  }
   private extractToken(req: Request, res: Response): any {
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
