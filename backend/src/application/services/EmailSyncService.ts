@@ -1,28 +1,52 @@
 import { injectable } from 'inversify';
-import AxiosWrapper from '../../utils/AxiosWrapper';
 import { IEmailSyncService } from '../interfaces/IEmailSyncService';
+import crypto from 'crypto';
+import { Client } from '@microsoft/microsoft-graph-client';
 
 @injectable()
 export class EmailSyncService implements IEmailSyncService {
-  constructor() {}
-
   public async synchronizeEmails(accessToken: string): Promise<void> {
-    const axiosWrapper = new AxiosWrapper('https://graph.microsoft.com/');
-    try {
-      const response = await axiosWrapper.get(
-        'v1.0/me/mailFolders/Inbox/messages',
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
+    const client = Client.init({
+      authProvider: (done) => {
+        done(null, accessToken);
+      },
+    });
 
-      const emails = response.data.value;
+    try {
+      const response = await client.api('/me/messages').get();
+      const emails = response.value;
+      await this.createSubscription(accessToken);
       //await this.storeEmail('biswajit.panday@live.com', emails);
       return emails;
     } catch (error: any) {
       throw new Error(`Error synchronizing emails: ${error?.message}`);
+    }
+  }
+
+  public async createSubscription(accessToken: string): Promise<void> {
+    const client = Client.init({
+      authProvider: (done) => {
+        done(null, accessToken);
+      },
+    });
+
+    const mailbox = 'user@domain.com'; // Replace with the actual mailbox
+
+    const subscription = {
+      changeType: 'updated',
+      notificationUrl: 'https://localhost:3000/listen',
+      resource: `users/${mailbox}/messages`,
+      expirationDateTime: new Date(
+        Date.now() + 2 * 24 * 60 * 60 * 1000,
+      ).toISOString(), // 2 days from now
+      clientState: crypto.randomBytes(16).toString('hex'),
+    };
+
+    try {
+      const response = await client.api('/subscriptions').post(subscription);
+      console.log('Subscription created: ', response);
+    } catch (error) {
+      console.error('Error creating subscription: ', error);
     }
   }
 

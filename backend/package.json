@@ -37,6 +37,7 @@
     "globals": "^15.6.0",
     "inversify": "^6.0.2",
     "inversify-express-utils": "^6.4.6",
+    "isomorphic-fetch": "^3.0.0",
     "jsonwebtoken": "^9.0.2",
     "node-cron": "^3.0.3",
     "reflect-metadata": "^0.2.2",
