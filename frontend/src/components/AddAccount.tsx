@@ -6,7 +6,7 @@ import { LOCAL_STORAGE_KEYS } from "../utils/LocalStorageConstant";
 import { useNavigate } from "react-router-dom";
 
 const AddAccount: React.FC = () => {
-  const axiosWrapper = new AxiosWrapper("https://localhost:3000/api/");
+  const axiosWrapper = new AxiosWrapper("http://localhost:3000/api/");
   const navigate = useNavigate();
 
   const { instance, accounts, inProgress } = useMsal();
