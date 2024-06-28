@@ -9,7 +9,6 @@ import { UserRepository } from '../repositories/UserRepository';
 import { Client } from '@elastic/elasticsearch';
 import { IElasticsearchRepository } from '../../domain/interfaces/IElasticSearchRepository';
 import { ElasticsearchRepository } from '../repositories/ElasticSearchRepository';
-import { OAuthService } from '../../application/services/OAuthService';
 import { EmailSyncService } from '../../application/services/EmailSyncService';
 import { EmailSyncRepository } from '../repositories/EmailSyncRepository';
 import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncRepository';
@@ -30,7 +29,6 @@ const initializeIocContainer = async (esClient: Client) => {
     .to(ElasticSearchController);
 
   container.bind<IAuthService>(TYPES.AuthService).to(AuthService);
-  container.bind<OAuthService>(TYPES.OAuthService).to(OAuthService);
   container
     .bind<IEmailSyncService>(TYPES.EmailSyncService)
     .to(EmailSyncService);
