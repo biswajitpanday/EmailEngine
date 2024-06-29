@@ -1,6 +1,5 @@
-import ngrok from 'ngrok';
-import AppConst from '../../utils/Constants';
 import logger from '../../utils/Logger';
+import ngrok from 'ngrok';
 
 class NgrokService {
   private static instance: NgrokService;
@@ -17,7 +16,8 @@ class NgrokService {
 
   public async connect(port: number): Promise<string> {
     try {
-      const authToken = AppConst.NgrokAuthToken;
+      const authToken = process.env.NGROK_AUTHTOKEN;
+      console.log(`Ngrok authToken : ${authToken}`);
       if (authToken) {
         await ngrok.authtoken(authToken);
       } else {

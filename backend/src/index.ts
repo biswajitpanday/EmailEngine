@@ -4,9 +4,7 @@ import * as fs from 'fs';
 import logger from './utils/Logger';
 
 const envFile =
-  process.env.NODE_ENV === 'production'
-    ? '.env.production'
-    : '.env.development';
+  process.env.NODE_ENV === 'production' ? '.env' : '.env.development';
 logger.info(`Selected Environment file: ${envFile}`);
 if (fs.existsSync(envFile)) {
   dotenv.config({ path: envFile });
@@ -88,6 +86,8 @@ import NgrokService from './infrastructure/config/NgrokService';
     } else {
       logger.error('Failed to start the application due to an unknown error');
     }
+    const ngrokService = NgrokService.getInstance();
+    await ngrokService.disconnect();
     process.exit(1); // Exit the process with an error code
   }
 })();

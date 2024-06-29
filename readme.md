@@ -32,7 +32,7 @@
     Create a .env file in the root directory and add the following variables:
 
     ```env
-    NODE_ENV=development
+    NODE_ENV=development [development | Production]
     ELASTICSEARCH_HOST=http://host.docker.internal:9200
     ELASTICSEARCH_USERNAME=elastic
     ELASTICSEARCH_PASSWORD=<your_elasticsearch_password>
@@ -42,7 +42,7 @@
     Create another .env file in the /backend directory with the following content:
 
     ```env
-    NODE_ENV=development
+    NODE_ENV=development [development | Production]
     CORS_ORIGIN=http://localhost:3001
     PORT=3000
     ELASTICSEARCH_HOST=http://host.docker.internal:9200
