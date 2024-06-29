@@ -16,7 +16,7 @@ export class UserRepository
   }
 
   /**
-   * Finds a user by their email.
+   * Finds a user document by their email.
    * @param email - The user's email address.
    * @returns The user document or null if not found.
    */

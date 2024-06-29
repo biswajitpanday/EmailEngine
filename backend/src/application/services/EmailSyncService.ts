@@ -1,12 +1,13 @@
 import { inject, injectable } from 'inversify';
 import { IEmailSyncService } from '../interfaces/IEmailSyncService';
 import crypto from 'crypto';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { EmailSyncModel } from '../../infrastructure/persistence/documents/EmailSyncModel';
 import logger from '../../utils/Logger';
 import { TYPES } from '../../infrastructure/di/types';
 import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncRepository';
 import NgrokService from '../../infrastructure/config/NgrokService';
+import TokenProvider from '../providers/TokenProvider';
+import { GraphClient } from '../../infrastructure/config/GraphClient';
 
 @injectable()
 export class EmailSyncService implements IEmailSyncService {
@@ -16,11 +17,8 @@ export class EmailSyncService implements IEmailSyncService {
   ) {}
 
   public async synchronizeEmails(accessToken: string): Promise<void> {
-    const client = Client.init({
-      authProvider: (done) => {
-        done(null, accessToken);
-      },
-    });
+    TokenProvider.setAccessToken(accessToken);
+    const client = GraphClient.getClient(accessToken);
 
     try {
       const response = await client.api('/me/messages').get();
@@ -35,20 +33,104 @@ export class EmailSyncService implements IEmailSyncService {
     }
   }
 
-  public async createSubscription(
+  public async handleNotification(notification: any): Promise<void> {
+    try {
+      const { resourceData, changeType } = notification;
+      const emailId = resourceData.id;
+      const accessToken = TokenProvider.getAccessToken();
+      if (!accessToken) {
+        throw new Error('Access token not available');
+      }
+
+      const client = GraphClient.getClient(accessToken);
+
+      switch (changeType) {
+        case 'created': {
+          const newEmail = await client.api(`/me/messages/${emailId}`).get();
+          await this.storeEmail(newEmail.from.emailAddress.address, [newEmail]);
+          logger.info(`Stored new email ID: ${emailId}`);
+          break;
+        }
+
+        case 'updated': {
+          const updatedEmail = await client
+            .api(`/me/messages/${emailId}`)
+            .get();
+          updatedEmail.isFlagged = updatedEmail.flag?.flagStatus === 'flagged';
+          updatedEmail.isMoved =
+            updatedEmail.parentFolderId !== updatedEmail.originalFolderId; // Check if folders differ
+          updatedEmail.isDeleted = updatedEmail.deletedDateTime !== null;
+          updatedEmail.isNew =
+            updatedEmail.createdDateTime === updatedEmail.receivedDateTime; // Check if newly created
+
+          await this.storeEmail(emailId, [updatedEmail]);
+          logger.info(
+            `Updated email ID: ${emailId} with read status and flags`,
+          );
+          break;
+        }
+
+        case 'deleted': {
+          const email = await this.emailSyncRepository.findByEmailId(emailId);
+          if (email != null) {
+            await this.emailSyncRepository.delete(email.id!);
+            logger.info(`Deleted email ID: ${emailId}`);
+          } else {
+            logger.info(`Email not found with emailId: ${emailId}`);
+          }
+          break;
+        }
+
+        default:
+          logger.warn(`Unhandled change type: ${changeType}`);
+          break;
+      }
+    } catch (error) {
+      logger.error('Error handling notification:', error);
+    }
+  }
+
+  //#region Private Methods
+  private async storeEmail(userEmail: string, emails: any[]): Promise<void> {
+    try {
+      emails.forEach(async (email: any) => {
+        const emailId = email.id;
+        const emailDocument = new EmailSyncModel(
+          userEmail,
+          emailId,
+          email.subject,
+          email.bodyPreview,
+          email.from.emailAddress.address,
+          email.toRecipients.map(
+            (recipient: any) => recipient.emailAddress.address,
+          ),
+          email.receivedDateTime,
+          email.createdDateTime,
+          email.parentFolderId,
+          email.originalFolderId,
+          email.isRead,
+          email.isFlagged,
+          email.isDeleted,
+          email.isMoved,
+          email.isNew,
+        );
+        await this.emailSyncRepository.createOrUpdate(emailDocument);
+        logger.info(`Email stored with ID: ${email.id}`);
+      });
+    } catch (error: any) {
+      logger.error(`Error storing email `, error.message);
+    }
+  }
+
+  private async createSubscription(
     accessToken: string,
     userEmail: string,
   ): Promise<void> {
-    const client = Client.init({
-      authProvider: (done) => {
-        done(null, accessToken);
-      },
-    });
-
+    const client = GraphClient.getClient(accessToken);
     const ngrokService = NgrokService.getInstance();
     const ngrokUrl = ngrokService.url;
     const subscription = {
-      changeType: 'updated',
+      changeType: 'created,updated,deleted',
       notificationUrl: `${ngrokUrl}/api/email/listen`,
       resource: `users/${userEmail}/messages`,
       expirationDateTime: new Date(
@@ -64,33 +146,5 @@ export class EmailSyncService implements IEmailSyncService {
       logger.error('Error creating subscription: ', error);
     }
   }
-
-  private async storeEmail(userEmail: string, emails: any[]): Promise<void> {
-    try {
-      emails.forEach(async (email: any) => {
-        const emailId = email.id;
-        const emailDocument = new EmailSyncModel(
-          userEmail,
-          emailId,
-          email.subject,
-          email.bodyPreview,
-          email.from.emailAddress.address,
-          email.toRecipients.map(
-            (recipient: any) => recipient.emailAddress.address,
-          ),
-          email.receivedDateTime,
-        );
-        const body = {
-          match: { emailId },
-        };
-        const existingEmail = await this.emailSyncRepository.findOne(body);
-        if (!existingEmail) {
-          await this.emailSyncRepository.create(emailDocument);
-        }
-        logger.info(`Email stored with ID: ${email.id}`);
-      });
-    } catch (error: any) {
-      logger.error(`Error storing email `, error.message);
-    }
-  }
+  //#endregion
 }

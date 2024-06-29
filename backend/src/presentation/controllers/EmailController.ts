@@ -27,7 +27,12 @@ export class EmailController {
     if (req.query.validationToken) {
       res.send(req.query.validationToken); // Validate the webhook
     } else {
-      console.log('Received notification:', req.body); // Process notifications
+      const notifications = req.body.value;
+      for (const notification of notifications) {
+        if (notification) {
+          await this.emailSyncService.handleNotification(notification);
+        }
+      }
       res.sendStatus(202);
     }
   }
