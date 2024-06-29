@@ -47,8 +47,8 @@ const AddAccount: React.FC = () => {
     }
   };
   return (
-    <div>
-      {inProgress && <h3>Adding Outlook Account...</h3>}
+    <div className="container center-screen">
+      {inProgress && <h3>Adding Outlook Account & Fetching your Emails...</h3>}
     </div>
   );
 };

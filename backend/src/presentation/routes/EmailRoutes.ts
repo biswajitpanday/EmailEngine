@@ -24,4 +24,11 @@ router.get(
   ),
 );
 
+router.post(
+  '/listen',
+  asyncHandler((req: Request, res: Response) =>
+    emailController.listen(req, res),
+  ),
+);
+
 export default router;

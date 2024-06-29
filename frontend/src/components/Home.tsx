@@ -12,27 +12,29 @@ const Home: React.FC = () => {
   };
 
   const handleEmailSync = () => {
-    navigate("/email");
+    navigate("/emails");
   };
 
   return (
-    <div className="auth-btn-container">
+    <div className="container auth-btn-container">
       <h1 className="app-title">Email Engine Core</h1>
       {isAuthenticated ? (
         <>
-          <div>
+          <div className="text-center">
             <p>Welcome: {accounts[0].username}</p>
           </div>
-          <div>
+          <div className="text-center">
             <button onClick={handleEmailSync} className="btn btn-primary">
               Sync Email
             </button>
           </div>
         </>
       ) : (
-        <button onClick={handleLogin} className="btn btn-primary">
-          Login with Outlook
-        </button>
+        <>
+          <button onClick={handleLogin} className="btn btn-primary">
+            Login with Outlook
+          </button>
+        </>
       )}
     </div>
   );

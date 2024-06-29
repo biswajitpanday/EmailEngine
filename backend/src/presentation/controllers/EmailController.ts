@@ -1,4 +1,4 @@
-import { controller, httpGet } from 'inversify-express-utils';
+import { controller, httpGet, httpPost } from 'inversify-express-utils';
 import { Request, Response } from 'express';
 import { TYPES } from '../../infrastructure/di/types';
 import { inject } from 'inversify';
@@ -22,6 +22,26 @@ export class EmailController {
     }
   }
 
+  @httpPost('/listen')
+  public async listen(req: Request, res: Response): Promise<void> {
+    if (req.query.validationToken) {
+      res.send(req.query.validationToken); // Validate the webhook
+    } else {
+      const notifications = req.body.value;
+      const token = req.query.token as string;
+      if (!token) {
+        throw new Error('Access token not available');
+      }
+      for (const notification of notifications) {
+        if (notification) {
+          await this.emailSyncService.handleNotification(notification, token);
+        }
+      }
+      res.sendStatus(202);
+    }
+  }
+
+  //#region Private Methods
   private extractToken(req: Request, res: Response): any {
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -32,4 +52,5 @@ export class EmailController {
     const accessToken = authHeader.split(' ')[1];
     return accessToken;
   }
+  //#endregion
 }

@@ -4,6 +4,7 @@ import { ElasticsearchRepository } from './ElasticSearchRepository';
 import { Client } from '@elastic/elasticsearch';
 import logger from '../../utils/Logger';
 import { UserModel } from '../persistence/documents/UserModel';
+import AppConst from '../../utils/Constants';
 
 @injectable()
 export class UserRepository
@@ -11,11 +12,11 @@ export class UserRepository
   implements IUserRepository
 {
   constructor() {
-    super(new Client({ node: process.env.ELASTICSEARCH_HOST }), 'users');
+    super(new Client({ node: AppConst.ElasticSearchHost }), 'users');
   }
 
   /**
-   * Finds a user by their email.
+   * Finds a user document by their email.
    * @param email - The user's email address.
    * @returns The user document or null if not found.
    */
