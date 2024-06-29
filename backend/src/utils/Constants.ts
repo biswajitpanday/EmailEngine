@@ -7,7 +7,6 @@ const AppConst = {
   ElasticSearchPassword: process.env.ELASTICSEARCH_PASSWORD || '',
   OutlookClientId: process.env.OUTLOOK_CLIENT_ID || '',
   OutlookClientSecret: process.env.OUTLOOK_CLIENT_SECRET || '',
-  FrontendUrl: process.env.FRONTEND_URL || '',
-  RedirectUri: process.env.REDIRECT_URI || '',
+  NgrokAuthToken: process.env.NGROK_AUTHTOKEN || '',
 };
 export default AppConst;

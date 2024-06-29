@@ -4,9 +4,9 @@ import { OnBehalfOfCredential } from '@azure/identity';
 import AppConst from '../../utils/Constants';
 import { TYPES } from '../../infrastructure/di/types';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
-import { Client } from '@microsoft/microsoft-graph-client';
 import { UserModel } from '../../infrastructure/persistence/documents/UserModel';
 import logger from '../../utils/Logger';
+import { Client } from '@microsoft/microsoft-graph-client';
 
 @injectable()
 class AuthService implements IAuthService {
