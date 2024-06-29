@@ -6,7 +6,6 @@ import logger from '../../utils/Logger';
 import { TYPES } from '../../infrastructure/di/types';
 import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncRepository';
 import NgrokService from '../../infrastructure/config/NgrokService';
-import TokenProvider from '../providers/TokenProvider';
 import { GraphClient } from '../../infrastructure/config/GraphClient';
 
 @injectable()
@@ -17,7 +16,6 @@ export class EmailSyncService implements IEmailSyncService {
   ) {}
 
   public async synchronizeEmails(accessToken: string): Promise<void> {
-    TokenProvider.setAccessToken(accessToken);
     const client = GraphClient.getClient(accessToken);
 
     try {
@@ -33,15 +31,13 @@ export class EmailSyncService implements IEmailSyncService {
     }
   }
 
-  public async handleNotification(notification: any): Promise<void> {
+  public async handleNotification(
+    notification: any,
+    accessToken: string,
+  ): Promise<void> {
     try {
       const { resourceData, changeType } = notification;
       const emailId = resourceData.id;
-      const accessToken = TokenProvider.getAccessToken();
-      if (!accessToken) {
-        throw new Error('Access token not available');
-      }
-
       const client = GraphClient.getClient(accessToken);
 
       switch (changeType) {
@@ -131,7 +127,7 @@ export class EmailSyncService implements IEmailSyncService {
     const ngrokUrl = ngrokService.url;
     const subscription = {
       changeType: 'created,updated,deleted',
-      notificationUrl: `${ngrokUrl}/api/email/listen`,
+      notificationUrl: `${ngrokUrl}/api/email/listen?token=${encodeURIComponent(accessToken)}`,
       resource: `users/${userEmail}/messages`,
       expirationDateTime: new Date(
         Date.now() + 2 * 24 * 60 * 60 * 1000,

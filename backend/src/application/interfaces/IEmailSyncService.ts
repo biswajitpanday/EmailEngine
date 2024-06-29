@@ -1,4 +1,4 @@
 export interface IEmailSyncService {
   synchronizeEmails(accessToken: string): any;
-  handleNotification(resourceData: any): Promise<void>;
+  handleNotification(resourceData: any, token: string): Promise<void>;
 }
