@@ -1,6 +1,16 @@
 # EmailEngine
 #### EmailEngine is a Email Synchronization Application.
 
+## Features
+
+- **OAuth Integration**: Seamless connection with Outlook using OAuth 2.0, allowing users to securely link their email accounts.
+- **Email Synchronization**: Efficiently synchronizes email data from Outlook, maintaining up-to-date records in the local database.
+- **Real-time Updates**: Monitors and reflects changes in email status, including read/unread status, moved emails, and deletions.
+- **Scalability**: Designed to handle a large number of users and email accounts, supporting both horizontal and vertical scaling.
+- **Extensibility**: Easily extendable to support additional email providers in the future using standard protocols.
+- **User-friendly Interface**: Simple frontend for account management and real-time display of email synchronization status.
+- **Secure Data Handling**: Utilizes Elasticsearch for secure and efficient storage of email data, ensuring user information is protected.
+
 ## Prerequisites
 - Node.js (v14 or higher)
 - Docker
