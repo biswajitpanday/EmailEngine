@@ -6,15 +6,17 @@ This document outlines the Git flow process used in this project.
 
 ### Branches
 
-- **main**: This is the main branch.
-- **sandbox**: This branch is used for sandbox deployment and testing.
-- **feature**: Feature branches are created from the `sandbox` branch for new features and enhancements.
+- **main**: The primary branch for production-ready code.
+- **sandbox**: Used for sandbox deployment and testing.
+- **feature**: Created from sandbox for new features and enhancements.
+- **refactor**: Dedicated to improving code structure and readability.
+- **hotfix**: Used for urgent post-release fixes to ensure application stability.
 
 ### Workflow
 
 1. **Creating a Feature Branch**
-   - When starting work on a new feature, create a new branch from the `sandbox` branch.
-   - Naming convention: `feature/your-feature-name`.
+   - Start work on a new feature by creating a branch from sandbox.
+   - Naming convention: `feature/your-feature-name` (e.g., `feature/user-auth`).
 
    ```bash
    git checkout sandbox
@@ -55,11 +57,11 @@ This document outlines the Git flow process used in this project.
     - The PR should be reviewed by team members.
 
 5. **QA Testing**
-    - Once the feature branch is merged into sandbox, it will be deployed to the sandbox environment for QA testing.
-    - QA engineers will test the sandbox deployment. If any issues are found, they should be addressed in the respective feature branch and the process repeated.
+    - Upon merging into `sandbox`, it will be deployed for QA testing.
+    - Address any issues found in the respective feature branch, then repeat the process.
 
 6. **Merging Sandbox to Main**
-    - After QA approval, the sandbox branch can be merged into the main branch.
+    - After QA approval, merge `sandbox` into `main`.
     - Ensure the sandbox branch is up-to-date with the latest changes before merging.
 
         ```bash

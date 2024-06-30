@@ -163,6 +163,8 @@
    - Real-time email events, such as flagged, read/unread, and moved statuses, are implemented in the backend and stored in the Elasticsearch database. You can use a Chrome extension to view the Elasticsearch documents and investigate these real-time events effectively.
    - Here's the Chrome Extension: https://chromewebstore.google.com/detail/elasticvue/hkedbapjpblbodpgbajblpnlpenaebaa?hl=en
  
+## Gitflow
+   For detailed information on managing Gitflow, please refer to the [Gitflow documentation](https://github.com/biswajitpanday/EmailEngine/blob/main/gitflow.md).
 
 ## Acknowledgements
 - [Node.js](https://nodejs.org/en)
