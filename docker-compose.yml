@@ -14,7 +14,7 @@ services:
     image: ngrok/ngrok:alpine
     environment:
       NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
-    command: 'http localhost:3000'        
+    command: 'http host.docker.internal:3000'
     ports:
       - '4040:4040'
     expose:
@@ -32,6 +32,7 @@ services:
       - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME}
       - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+      - ENVIRONMENT=production
     depends_on:
       - ngrok
       - elasticsearch

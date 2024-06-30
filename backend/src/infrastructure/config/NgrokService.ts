@@ -1,3 +1,4 @@
+import AxiosWrapper from '../../utils/AxiosWrapper';
 import logger from '../../utils/Logger';
 import ngrok from 'ngrok';
 
@@ -15,6 +16,24 @@ class NgrokService {
   }
 
   public async connect(port: number): Promise<string> {
+    logger.info(`Environment for ngrok: ${process.env.ENVIRONMENT}`);
+    if (process.env.ENVIRONMENT === 'production') {
+      this.url = await this.getNgrokForProduction();
+    } else {
+      this.url = await this.getNgrokForDev(port);
+    }
+    return this.url;
+  }
+  public async getNgrokForProduction(): Promise<string> {
+    const axiosWrapper = new AxiosWrapper('http://ngrok');
+    const response = await axiosWrapper.get('http://ngrok:4040/api/tunnels');
+    logger.info(`Response ${JSON.stringify(response.data)}`);
+    const publicUrl = response.data.tunnels[0].public_url;
+    logger.info(`Ngrok Public Url: ${publicUrl}`);
+    return publicUrl;
+  }
+
+  public async getNgrokForDev(port: number): Promise<string> {
     try {
       const authToken = process.env.NGROK_AUTHTOKEN;
       console.log(`Ngrok authToken : ${authToken}`);
