@@ -10,32 +10,44 @@ services:
       - "9200:9200"
       - "9300:9300"
 
-  app:
+  ngrok:
+    image: ngrok/ngrok:alpine
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: 'http host.docker.internal:3000'
+    ports:
+      - '4040:4040'
+    expose:
+      - '4040'
+
+  backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=${NODE_ENV}
-      - MONGO_URI=${MONGO_URI}
       - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST}
       - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME}
       - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+      - ENVIRONMENT=production
     depends_on:
-      - mongo
+      - ngrok
       - elasticsearch
-    command: npm run dev
+    command: npm run start
     volumes:
-      - .:/usr/src/app
+      - ./backend:/usr/src/app
 
-  mongo:
-    image: mongo:latest
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db  
+      - "3001:80"
+    depends_on:
+      - backend
 
 volumes:
-  mongo-data:
   es-data:
