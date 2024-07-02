@@ -18,7 +18,6 @@
 ## Prerequisites
 - Node.js (v14 or higher)
 - Docker
-- Ngrok
 - Azure account access
 - Azure Admin privileges to register applications
 

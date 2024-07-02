@@ -1,7 +1,7 @@
 import { ElasticSearchDocument } from './ElasticSearchDocument';
 
 export class EmailSyncModel extends ElasticSearchDocument {
-  public userEmail: string;
+  public userId: string;
   public emailId: string;
   public subject: string;
   public body: string;
@@ -22,7 +22,6 @@ export class EmailSyncModel extends ElasticSearchDocument {
 
   /**
    * EmailSync model constructor
-   * @param userEmail - User's email address
    * @param emailId - Email ID
    * @param subject - Email subject
    * @param body - Email body
@@ -42,7 +41,7 @@ export class EmailSyncModel extends ElasticSearchDocument {
    * @param webLink - Web Link
    */
   constructor(
-    userEmail: string,
+    userId: string,
     emailId: string,
     subject: string,
     body: string,
@@ -62,7 +61,7 @@ export class EmailSyncModel extends ElasticSearchDocument {
     webLink?: string,
   ) {
     super();
-    this.userEmail = userEmail;
+    this.userId = userId;
     this.emailId = emailId;
     this.subject = subject;
     this.body = body;

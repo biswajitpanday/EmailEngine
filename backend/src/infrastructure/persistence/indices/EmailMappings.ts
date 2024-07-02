@@ -1,7 +1,7 @@
 const emailMappings = {
   mappings: {
     properties: {
-      userEmail: { type: 'keyword' },
+      userId: { type: 'keyword' },
       emailId: { type: 'keyword' },
       subject: { type: 'text' },
       body: { type: 'text' },

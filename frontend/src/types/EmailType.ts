@@ -2,7 +2,7 @@ import { Sender } from "./SenderType";
 
 export type Email = {
   id: string;
-  userEmail: string;
+  userId: string;
   subject: string;
   body: string;
   from: string;
