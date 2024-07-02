@@ -1,12 +1,13 @@
 import { inject, injectable } from 'inversify';
 import { IEmailSyncService } from '../interfaces/IEmailSyncService';
 import crypto from 'crypto';
-import { EmailSyncModel } from '../../infrastructure/persistence/documents/EmailSyncModel';
 import logger from '../../utils/Logger';
 import { TYPES } from '../../infrastructure/di/types';
 import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncRepository';
 import NgrokService from '../../infrastructure/config/NgrokService';
 import { GraphClient } from '../../infrastructure/config/GraphClient';
+import { Socket } from '../../infrastructure/config/Socket';
+import { EmailSyncModel } from '../../infrastructure/persistence/documents/EmailSyncModel';
 
 @injectable()
 export class EmailSyncService implements IEmailSyncService {
@@ -39,11 +40,13 @@ export class EmailSyncService implements IEmailSyncService {
       const { resourceData, changeType } = notification;
       const emailId = resourceData.id;
       const client = GraphClient.getClient(accessToken);
+      const io = Socket.getInstance();
 
       switch (changeType) {
         case 'created': {
           const newEmail = await client.api(`/me/messages/${emailId}`).get();
           await this.storeEmail(newEmail.from.emailAddress.address, [newEmail]);
+          io.emit('emailCreated', newEmail); // Emit event for new email
           logger.info(`Stored new email ID: ${emailId}`);
           break;
         }
@@ -52,7 +55,8 @@ export class EmailSyncService implements IEmailSyncService {
           const updatedEmail = await client
             .api(`/me/messages/${emailId}`)
             .get();
-          updatedEmail.isFlagged = updatedEmail.flag?.flagStatus === 'flagged';
+          updatedEmail.isFlagged =
+            updatedEmail.flag && updatedEmail.flag.flagStatus === 'flagged';
           updatedEmail.isMoved =
             updatedEmail.parentFolderId !== updatedEmail.originalFolderId; // Check if folders differ
           updatedEmail.isDeleted = updatedEmail.deletedDateTime !== null;
@@ -60,6 +64,7 @@ export class EmailSyncService implements IEmailSyncService {
             updatedEmail.createdDateTime === updatedEmail.receivedDateTime; // Check if newly created
 
           await this.storeEmail(emailId, [updatedEmail]);
+          io.emit('emailUpdated', updatedEmail); // Emit event for updated email
           logger.info(
             `Updated email ID: ${emailId} with read status and flags`,
           );
@@ -70,6 +75,7 @@ export class EmailSyncService implements IEmailSyncService {
           const email = await this.emailSyncRepository.findByEmailId(emailId);
           if (email != null) {
             await this.emailSyncRepository.delete(email.id!);
+            io.emit('emailDeleted', emailId); // Emit event for deleted email
             logger.info(`Deleted email ID: ${emailId}`);
           } else {
             logger.info(`Email not found with emailId: ${emailId}`);
@@ -89,6 +95,7 @@ export class EmailSyncService implements IEmailSyncService {
   //#region Private Methods
   private async storeEmail(userEmail: string, emails: any[]): Promise<void> {
     try {
+      const io = Socket.getInstance();
       emails.forEach(async (email: any) => {
         const emailId = email.id;
         const emailDocument = new EmailSyncModel(
