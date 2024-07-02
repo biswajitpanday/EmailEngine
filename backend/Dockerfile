@@ -7,15 +7,14 @@ WORKDIR /usr/src/app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
+# Disable strict-ssl
+RUN npm config set strict-ssl false
+
 # Install app dependencies with the --legacy-peer-deps flag
 RUN npm install --legacy-peer-deps
 
 # Copy the rest of the source code
 COPY . .
-
-# Add a user to run the application
-# RUN useradd -ms /bin/bash nodeuser
-# USER nodeuser
 
 # Build the TypeScript code
 RUN npm run build
@@ -31,11 +30,11 @@ COPY --from=build /usr/src/app/package*.json ./
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 
-# Install TypeScript and Nodemon globally
-RUN npm install -g typescript ts-node nodemon
+# Install only production dependencies
+RUN npm ci --only=production --legacy-peer-deps
 
-# Open port 3000
-EXPOSE 3000
+# Open port 3000 and 4040
+EXPOSE 3000 4040
 
 # Start the server
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]
