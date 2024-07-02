@@ -1,8 +1,7 @@
 import { io } from 'socket.io-client';
+import { AppConst } from './AppConstant';
 
-const SOCKET_URL = 'http://localhost:3000'; // Replace with your backend URL
-
-const socket = io(SOCKET_URL, {
+const socket = io(AppConst.SOCKET_BASEURL, {
   transports: ['websocket'], // Optional, depending on your needs
   withCredentials: true,
 });

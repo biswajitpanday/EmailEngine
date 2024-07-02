@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { Button, Container, Modal, Table } from "react-bootstrap";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  Button,
+  Container,
+  Modal,
+  Table,
+  Alert,
+  Spinner,
+} from "react-bootstrap";
 import AxiosWrapper from "../utils/AxiosWrapper";
 import { useMsal } from "@azure/msal-react";
 import { useNavigate } from "react-router-dom";
@@ -11,16 +18,20 @@ import {
   faEnvelopeOpen,
   faFlag,
   faTrash,
-  faSyncAlt,
   faFolder,
 } from "@fortawesome/free-solid-svg-icons";
+import { AppConst } from "../utils/AppConstant";
+import { debounce } from "lodash";
 
 const EmailPage: React.FC = () => {
   const [emails, setEmails] = useState<Email[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [syncStatus, setSyncStatus] = useState("Not Started");
-  const axiosWrapper = new AxiosWrapper("http://localhost:3000/api/", true);
+  const [connectionStatus, setConnectionStatus] = useState("Connected");
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const axiosWrapper = new AxiosWrapper(AppConst.API_BASEURL, true);
 
   const navigate = useNavigate();
   const { accounts } = useMsal();
@@ -46,37 +57,99 @@ const EmailPage: React.FC = () => {
     fetchEmails();
   }, [isAuthenticated, navigate]);
 
-  useEffect(() => {
-    socket.on("connect", () => {
-      console.log("Connected to the server");
-    });
-    socket.on("emailCreated", (email: Email) => {
+  const handleEmailCreated = useCallback(
+    debounce((email: Email) => {
       console.log(`emailCreated Event: ${email}`);
-      setEmails((prevEmails) => [...prevEmails, email]);
-    });
+      setEmails((prevEmails) => [email, ...prevEmails]);
+    }, 300),
+    []
+  );
 
-    socket.on("emailUpdated", (updatedEmail: Email) => {
+  const handleEmailUpdated = useCallback(
+    debounce((updatedEmail: Email) => {
       console.log(`emailUpdated Event: ${updatedEmail}`);
       setEmails((prevEmails) =>
         prevEmails.map((email) =>
           email.id === updatedEmail.id ? updatedEmail : email
         )
       );
-    });
+    }, 300),
+    []
+  );
 
-    socket.on("emailDeleted", (emailId: string) => {
+  const handleEmailDeleted = useCallback(
+    debounce((emailId: string) => {
       console.log(`emailDeleted Event: ${emailId}`);
       setEmails((prevEmails) =>
         prevEmails.filter((email) => email.id !== emailId)
       );
+    }, 300),
+    []
+  );
+
+  const attemptReconnect = useCallback(() => {
+    if (isRetrying) return;
+
+    setIsRetrying(true);
+    let retries = 0;
+    const maxRetries = 5;
+    const retryInterval = setInterval(() => {
+      if (retries >= maxRetries) {
+        clearInterval(retryInterval);
+        setIsRetrying(false);
+        return;
+      }
+
+      socket.connect();
+      retries += 1;
+      setRetryCount(retries);
+    }, 2000 * retries);
+  }, [isRetrying]);
+
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log("Connected to the server");
+      setConnectionStatus("Connected");
+      setIsRetrying(false);
+      setRetryCount(0);
     });
 
+    socket.on("disconnect", (reason) => {
+      console.warn("Disconnected from server:", reason);
+      setConnectionStatus("Disconnected");
+      attemptReconnect();
+    });
+
+    socket.on("reconnect_attempt", () => {
+      console.log("Attempting to reconnect to server...");
+      setConnectionStatus("Reconnecting...");
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Connection error:", error);
+      setConnectionStatus("Connection Error");
+      attemptReconnect();
+    });
+
+    socket.on("emailCreated", handleEmailCreated);
+    socket.on("emailUpdated", handleEmailUpdated);
+    socket.on("emailDeleted", handleEmailDeleted);
+
     return () => {
-      socket.off("emailCreated");
-      socket.off("emailUpdated");
-      socket.off("emailDeleted");
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.off("reconnect_attempt");
+      socket.off("connect_error");
+      socket.off("emailCreated", handleEmailCreated);
+      socket.off("emailUpdated", handleEmailUpdated);
+      socket.off("emailDeleted", handleEmailDeleted);
     };
-  }, []);
+  }, [
+    attemptReconnect,
+    handleEmailCreated,
+    handleEmailUpdated,
+    handleEmailDeleted,
+  ]);
 
   const handleRowClick = (email: Email) => {
     setSelectedEmail(email);
@@ -95,14 +168,31 @@ const EmailPage: React.FC = () => {
         <p className="lead">
           <small>Sync-Status: {syncStatus}</small>
         </p>
+        <p className="lead">
+          <small>Connection Status: {connectionStatus}</small>
+        </p>
+        {isRetrying && (
+          <p className="lead">
+            <small>Retrying to connect... (Attempt {retryCount})</small>
+            <Spinner animation="border" size="sm" />
+          </p>
+        )}
+        {connectionStatus !== "Connected" && !isRetrying && (
+          <Button onClick={attemptReconnect} variant="primary">
+            Retry Connection
+          </Button>
+        )}
       </div>
+      {connectionStatus !== "Connected" && (
+        <Alert variant="danger">Connection issue: {connectionStatus}</Alert>
+      )}
       <Table bordered striped hover responsive>
         <thead className="thead-light">
           <tr>
-            <th>Subject line</th>
+            <th>Subject</th>
             <th>Sender name</th>
             <th>Status</th>
-            <th>Flags</th>
+            <th>Flag</th>
           </tr>
         </thead>
         <tbody>
@@ -110,7 +200,7 @@ const EmailPage: React.FC = () => {
             <tr
               key={email.id}
               onClick={() => handleRowClick(email)}
-              className="pe-auto"
+              className="cursor-pointer"
             >
               <td>
                 <strong>{email.subject}</strong>
@@ -121,13 +211,6 @@ const EmailPage: React.FC = () => {
                   <FontAwesomeIcon icon={faEnvelopeOpen} title="Read" />
                 ) : (
                   <FontAwesomeIcon icon={faEnvelope} title="Unread" />
-                )}
-                {email.isNew && (
-                  <FontAwesomeIcon
-                    icon={faSyncAlt}
-                    title="New"
-                    className="ml-2"
-                  />
                 )}
                 {email.isMoved && (
                   <FontAwesomeIcon

@@ -16,6 +16,9 @@ const emailMappings = {
       isDeleted: { type: 'boolean' },
       isMoved: { type: 'boolean' },
       isNew: { type: 'boolean' },
+      lastModifiedDateTime: { type: 'date' },
+      isDraft: { type: 'boolean' },
+      webLink: { type: 'text' },
     },
   },
 };
