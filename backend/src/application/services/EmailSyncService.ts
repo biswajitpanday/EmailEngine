@@ -95,7 +95,6 @@ export class EmailSyncService implements IEmailSyncService {
   //#region Private Methods
   private async storeEmail(userEmail: string, emails: any[]): Promise<void> {
     try {
-      const io = Socket.getInstance();
       emails.forEach(async (email: any) => {
         const emailId = email.id;
         const emailDocument = new EmailSyncModel(
