@@ -25,19 +25,21 @@ import { initializeIocContainer } from './infrastructure/di/container';
 import './presentation/controllers/HealthCheckController';
 import AppConst from './utils/Constants';
 import NgrokService from './infrastructure/config/NgrokService';
+import { Socket } from './infrastructure/config/Socket';
+import { createServer } from 'http';
 
 (async () => {
   try {
     // Initialize ngrok
     const ngrokService = NgrokService.getInstance();
-    const ngrokUrl = await ngrokService.connect(3000);
+    const ngrokUrl = await ngrokService.connect(+AppConst.Port || 3000);
     logger.info(`Public URL (NGROK): ${ngrokUrl}`);
 
     // Initialize ElasticSearch
     const esClient = await connectElasticsearch();
 
     // Initialize ElasticSearch Indexes
-    await initializeElasticSearchIndexing(esClient); // todo: fix this
+    await initializeElasticSearchIndexing(esClient);
 
     // Initialize IOC Container
     const container = await initializeIocContainer(esClient);
@@ -74,8 +76,20 @@ import NgrokService from './infrastructure/config/NgrokService';
     const app = server.build();
     const port = AppConst.Port || 3000;
 
-    app.listen(port, () => {
+    // Create the HTTP server
+    const httpServer = createServer(app);
+    // Initialize Socket.io
+    const io = Socket.initialize(httpServer);
+
+    httpServer.listen(port, () => {
       logger.info(`Server is running on port ${port}`);
+    });
+
+    app.get('/', (req, res) => {
+      res.send('Socket.io server is running');
+    });
+    io.on('connection', (socket) => {
+      socket.emit('welcome', { message: 'Welcome to the socket.io server!' });
     });
   } catch (error: unknown) {
     if (error instanceof Error) {

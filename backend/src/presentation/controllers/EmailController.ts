@@ -26,19 +26,19 @@ export class EmailController {
   public async listen(req: Request, res: Response): Promise<void> {
     if (req.query.validationToken) {
       res.send(req.query.validationToken); // Validate the webhook
-    } else {
-      const notifications = req.body.value;
-      const token = req.query.token as string;
-      if (!token) {
-        throw new Error('Access token not available');
-      }
-      for (const notification of notifications) {
-        if (notification) {
-          await this.emailSyncService.handleNotification(notification, token);
-        }
-      }
-      res.sendStatus(202);
+      return;
     }
+    const notifications = req.body.value;
+    const token = req.query.token as string;
+    if (!token) {
+      throw new Error('Access token not available');
+    }
+    for (const notification of notifications) {
+      if (notification) {
+        await this.emailSyncService.handleNotification(notification, token);
+      }
+    }
+    res.sendStatus(202);
   }
 
   //#region Private Methods
