@@ -2,9 +2,9 @@ import { injectable } from 'inversify';
 import { ElasticsearchRepository } from './ElasticSearchRepository';
 import { Client } from '@elastic/elasticsearch';
 import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncRepository';
-import { EmailSyncModel } from '../persistence/documents/EmailSyncModel';
 import AppConst from '../../utils/Constants';
 import logger from '../../utils/Logger';
+import { EmailSyncModel } from '../persistence/documents/EmailSyncModel';
 
 @injectable()
 export class EmailSyncRepository
@@ -34,6 +34,19 @@ export class EmailSyncRepository
       return result;
     }
     logger.warn(`No email found with emailId: ${emailId}`);
+    return null;
+  }
+
+  public async findByUserId(userId: any): Promise<EmailSyncModel | null> {
+    const body = {
+      match: { userId },
+    };
+    const result = await this.findOne(body);
+    if (result) {
+      logger.info(`Email found with userId: ${userId}`);
+      return result;
+    }
+    logger.warn(`No email found with userId: ${userId}`);
     return null;
   }
 }

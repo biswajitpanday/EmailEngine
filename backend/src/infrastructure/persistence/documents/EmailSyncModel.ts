@@ -1,72 +1,27 @@
-import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
-import { Expose } from 'class-transformer';
 import { ElasticSearchDocument } from './ElasticSearchDocument';
 
 export class EmailSyncModel extends ElasticSearchDocument {
-  @IsNotEmpty({ message: 'User email is required' })
-  @IsEmail({}, { message: 'Invalid user email address' })
-  @Expose()
-  public userEmail: string;
-
-  @IsNotEmpty({ message: 'Email ID is required' })
-  @Expose()
+  public userId: string;
   public emailId: string;
-
-  @IsNotEmpty({ message: 'Email subject is required' })
-  @Expose()
   public subject: string;
-
-  @IsNotEmpty({ message: 'Email body is required' })
-  @Expose()
   public body: string;
-
-  @IsNotEmpty({ message: 'Sender email is required' })
-  @IsEmail({}, { message: 'Invalid sender email address' })
-  @Expose()
   public from: string;
-
-  @IsNotEmpty({ message: 'Recipient emails are required' })
-  @Expose()
   public to: string[];
-
-  @IsNotEmpty({ message: 'Received date and time is required' })
-  @Expose()
   public receivedDateTime: string;
-
-  @IsNotEmpty({ message: 'Created date and time is required' })
-  @Expose()
   public createdDateTime: string;
-
-  @IsOptional()
-  @Expose()
   public parentFolderId: string;
-
-  @IsOptional()
-  @Expose()
   public originalFolderId: string;
-
-  @IsOptional()
-  @Expose()
   public isRead?: boolean;
-
-  @IsOptional()
-  @Expose()
   public isFlagged?: boolean;
-
-  @IsOptional()
-  @Expose()
   public isDeleted?: boolean;
-
-  @IsOptional()
-  @Expose()
   public isMoved?: boolean;
-
-  @IsOptional()
-  @Expose()
   public isNew?: boolean;
+  public lastModifiedDateTime?: string;
+  public isDraft?: boolean;
+  public webLink?: string;
+
   /**
    * EmailSync model constructor
-   * @param userEmail - User's email address
    * @param emailId - Email ID
    * @param subject - Email subject
    * @param body - Email body
@@ -81,9 +36,12 @@ export class EmailSyncModel extends ElasticSearchDocument {
    * @param isDeleted - Email Is Deleted
    * @param isMoved - Email Is Moved
    * @param isNew - Email Is New
+   * @param isDraft - Email Is Draft
+   * @param lastModifiedDateTime - LastModified date and time
+   * @param webLink - Web Link
    */
   constructor(
-    userEmail: string,
+    userId: string,
     emailId: string,
     subject: string,
     body: string,
@@ -98,9 +56,12 @@ export class EmailSyncModel extends ElasticSearchDocument {
     isDeleted?: boolean,
     isMoved?: boolean,
     isNew?: boolean,
+    isDraft?: boolean,
+    lastModifiedDateTime?: string,
+    webLink?: string,
   ) {
     super();
-    this.userEmail = userEmail;
+    this.userId = userId;
     this.emailId = emailId;
     this.subject = subject;
     this.body = body;
@@ -115,5 +76,8 @@ export class EmailSyncModel extends ElasticSearchDocument {
     this.isDeleted = isDeleted;
     this.isMoved = isMoved;
     this.isNew = isNew;
+    this.lastModifiedDateTime = lastModifiedDateTime;
+    this.isDraft = isDraft;
+    this.webLink = webLink;
   }
 }
