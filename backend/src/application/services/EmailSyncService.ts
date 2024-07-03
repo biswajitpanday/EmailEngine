@@ -8,12 +8,14 @@ import NgrokService from '../../infrastructure/config/NgrokService';
 import { GraphClient } from '../../infrastructure/config/GraphClient';
 import { Socket } from '../../infrastructure/config/Socket';
 import { EmailSyncModel } from '../../infrastructure/persistence/documents/EmailSyncModel';
+import { IUserRepository } from '../../domain/interfaces/IUserRepository';
 
 @injectable()
 export class EmailSyncService implements IEmailSyncService {
   constructor(
     @inject(TYPES.EmailSyncRepository)
     private emailSyncRepository: IEmailSyncRepository,
+    @inject(TYPES.UserRepository) private userRepository: IUserRepository,
   ) {}
 
   public async synchronizeEmails(accessToken: string): Promise<void> {
@@ -83,6 +85,7 @@ export class EmailSyncService implements IEmailSyncService {
   private getIsFlagged(email: any): boolean {
     return email.flag?.flagStatus === 'flagged';
   }
+
   private getIsMoved(email: any): boolean {
     return (email.isMoved =
       email.parentFolderId != undefined &&
@@ -92,10 +95,12 @@ export class EmailSyncService implements IEmailSyncService {
 
   private async storeEmail(userEmail: string, emails: any[]): Promise<void> {
     try {
-      emails.forEach(async (email: any) => {
+      const user = await this.userRepository.findByEmail(userEmail);
+      const userId = user?.id;
+      await emails.forEach(async (email: any) => {
         const emailId = email.id;
         const emailDocument = new EmailSyncModel(
-          userEmail, // todo: Store UserId instead of UserEmail
+          userId!,
           emailId,
           email.subject,
           email.bodyPreview,

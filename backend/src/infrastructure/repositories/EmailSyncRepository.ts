@@ -36,4 +36,17 @@ export class EmailSyncRepository
     logger.warn(`No email found with emailId: ${emailId}`);
     return null;
   }
+
+  public async findByUserId(userId: any): Promise<EmailSyncModel | null> {
+    const body = {
+      match: { userId },
+    };
+    const result = await this.findOne(body);
+    if (result) {
+      logger.info(`Email found with userId: ${userId}`);
+      return result;
+    }
+    logger.warn(`No email found with userId: ${userId}`);
+    return null;
+  }
 }
