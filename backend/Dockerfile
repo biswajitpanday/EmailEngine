@@ -1,4 +1,3 @@
-# Stage 1: Build stage
 FROM node:18 AS build
 
 # Create and change to the app directory
@@ -10,25 +9,19 @@ COPY package*.json ./
 # Disable strict-ssl
 RUN npm config set strict-ssl false
 
+RUN  npm cache clean --force
+
 # Install app dependencies with the --legacy-peer-deps flag
 RUN npm install --legacy-peer-deps
 
 # Copy the rest of the source code
 COPY . .
 
-# Build the TypeScript code
+# Ensure the dist folder exists and set permissions
+RUN mkdir -p dist && chmod -R 755 dist
+
+# Build the TypeScript code (assuming your build script creates the dist folder)
 RUN npm run build
-
-# Stage 2: Production stage
-FROM node:18 AS production
-
-# Create and change to the app directory
-WORKDIR /usr/src/app
-
-# Copy only the necessary files from the build stage
-COPY --from=build /usr/src/app/package*.json ./
-# COPY --from=build /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/dist ./dist
 
 # Install only production dependencies
 RUN npm ci --only=production --legacy-peer-deps

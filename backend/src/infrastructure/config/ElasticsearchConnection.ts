@@ -4,48 +4,70 @@ import AppConst from '../../utils/Constants';
 //import fs from 'fs';
 
 const DEFAULT_ELASTICSEARCH_HOST = 'http://localhost:9200';
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 2000; // 2 seconds
 
 /**
  * Connect to Elasticsearch
  * @returns {Promise<Client>} Elasticsearch client
  */
 const connectElasticsearch = async (): Promise<Client> => {
-  try {
-    logger.info(`Connecting to Elasticsearch...`);
+  logger.info(`Initializing Elasticsearch Client...`);
 
-    const esClientOptions: any = {
-      node: AppConst.ElasticSearchHost || DEFAULT_ELASTICSEARCH_HOST,
-      auth: {
-        password: AppConst.ElasticSearchPassword,
-        username: AppConst.ElasticSearchUserName,
-      },
-    };
+  const esClientOptions: any = {
+    node: AppConst.ElasticSearchHost || DEFAULT_ELASTICSEARCH_HOST,
+    auth: {
+      password: AppConst.ElasticSearchPassword,
+      username: AppConst.ElasticSearchUserName,
+    },
+  };
 
-    // if (AppConst.NodeEnv === 'production') {
-    //   const ca = fs.readFileSync('./certs/elasticsearch.crt');
-    //   const httpsAgent = new https.Agent({
-    //     ca,
-    //     rejectUnauthorized: true, // Set to true for production
-    //   });
-    //   esClientOptions.ssl = {
-    //     ca,
-    //     rejectUnauthorized: true, // Set to true for production
-    //   };
-    //   esClientOptions.agent = httpsAgent;
-    // }
+  // ToDo: Fix and implement for Production
+  // if (AppConst.NodeEnv === 'production') {
+  //   const ca = fs.readFileSync('./certs/elasticsearch.crt');
+  //   const httpsAgent = new https.Agent({
+  //     ca,
+  //     rejectUnauthorized: true, // Set to true for production
+  //   });
+  //   esClientOptions.ssl = {
+  //     ca,
+  //     rejectUnauthorized: true, // Set to true for production
+  //   };
+  //   esClientOptions.agent = httpsAgent;
+  // }
 
-    const esClient = new Client(esClientOptions);
+  let attempts = 0;
+  while (attempts < MAX_RETRIES) {
+    try {
+      logger.info(`Connecting to Elasticsearch... Attempt: ${attempts + 1}`);
 
-    logger.info(`Successfully connected to Elasticsearch...`);
-    const health = await esClient.cluster.health({});
-    logger.info(
-      `Elasticsearch connected successfully\nHealth: ${JSON.stringify(health)}`,
-    );
-    return esClient;
-  } catch (err) {
-    logger.error('Elasticsearch connection error:', err);
-    process.exit(1); // Exit the process if Elasticsearch connection fails
+      const esClient = new Client(esClientOptions);
+
+      logger.info(`Successfully connected to Elasticsearch...`);
+      const health = await esClient.cluster.health({});
+      logger.info(
+        `Elasticsearch connected successfully\nHealth: ${JSON.stringify(health)}`,
+      );
+      return esClient;
+    } catch (err) {
+      attempts++;
+      logger.error(
+        `Elasticsearch connection error (attempt ${attempts}):`,
+        err,
+      );
+
+      if (attempts >= MAX_RETRIES) {
+        logger.error('Max retries reached. Exiting...');
+        process.exit(1); // Exit the process if max retries reached
+      }
+
+      // Wait before retrying
+      await new Promise((resolve) =>
+        setTimeout(resolve, RETRY_DELAY * attempts),
+      );
+    }
   }
+  throw new Error('Failed to connect to Elasticsearch.');
 };
 
 export default connectElasticsearch;

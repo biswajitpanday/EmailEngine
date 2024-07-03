@@ -41,8 +41,6 @@ services:
       - ngrok
       - elasticsearch
     command: npm run start
-    volumes:
-      - ./backend:/usr/src/app
 
   frontend:
     build:
