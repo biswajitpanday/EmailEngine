@@ -158,9 +158,10 @@
 
     To obtain Ngrok Authtoken please Login/Signup on [Ngrok official site](https://ngrok.com/) and find the menu [Your Authtoken](https://dashboard.ngrok.com/get-started/your-authtoken) from the dashboard.
 
-## Notes
-   - Real-time email events, such as flagged, read/unread, and moved statuses, are implemented in the backend and stored in the Elasticsearch database. You can use a Chrome extension to view the Elasticsearch documents and investigate these real-time events effectively.
-   - Here's the Chrome Extension: https://chromewebstore.google.com/detail/elasticvue/hkedbapjpblbodpgbajblpnlpenaebaa?hl=en
+2. **How to browse Elasticsearch Database?**
+
+   Here's a Chrome Extension: https://chromewebstore.google.com/detail/elasticvue/hkedbapjpblbodpgbajblpnlpenaebaa?hl=en
+
  
 ## Gitflow
    For detailed information on managing Gitflow, please refer to the [Gitflow documentation](https://github.com/biswajitpanday/EmailEngine/blob/main/gitflow.md).
