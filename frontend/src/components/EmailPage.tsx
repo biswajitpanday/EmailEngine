@@ -7,6 +7,7 @@ import {
   Alert,
   Spinner,
 } from "react-bootstrap";
+import { CSSTransition } from 'react-transition-group';
 import AxiosWrapper from "../utils/AxiosWrapper";
 import { useMsal } from "@azure/msal-react";
 import { useNavigate } from "react-router-dom";
@@ -197,38 +198,40 @@ const EmailPage: React.FC = () => {
         </thead>
         <tbody>
           {emails.map((email) => (
-            <tr
-              key={email.id}
-              onClick={() => handleRowClick(email)}
-              className="cursor-pointer"
-            >
-              <td>
-                <strong>{email.subject}</strong>
-              </td>
-              <td>{email.sender.emailAddress.name}</td>
-              <td>
-                {email.isRead ? (
-                  <FontAwesomeIcon icon={faEnvelopeOpen} title="Read" />
-                ) : (
-                  <FontAwesomeIcon icon={faEnvelope} title="Unread" />
-                )}
-                {email.isMoved && (
-                  <FontAwesomeIcon
-                    icon={faFolder}
-                    title="Moved"
-                    className="ml-2"
-                  />
-                )}
-              </td>
-              <td>
-                {email.isFlagged && (
-                  <FontAwesomeIcon icon={faFlag} title="Flagged" />
-                )}
-                {email.isDeleted && (
-                  <FontAwesomeIcon icon={faTrash} title="Deleted" />
-                )}
-              </td>
-            </tr>
+            <CSSTransition key={email.id} timeout={500} classNames="email-new">
+              <tr
+                key={email.id}
+                onClick={() => handleRowClick(email)}
+                className="cursor-pointer"
+              >
+                <td>
+                  <strong>{email.subject}</strong>
+                </td>
+                <td>{email.sender.emailAddress.name}</td>
+                <td>
+                  {email.isRead ? (
+                    <FontAwesomeIcon icon={faEnvelopeOpen} title="Read" className="email-icon-glow-read" />
+                  ) : (
+                    <FontAwesomeIcon icon={faEnvelope} title="Unread" className="email-icon-glow-read" />
+                  )}
+                  {email.isMoved && (
+                    <FontAwesomeIcon
+                      icon={faFolder}
+                      title="Moved"
+                      className="ml-2"
+                    />
+                  )}
+                </td>
+                <td>
+                  {email.isFlagged && (
+                    <FontAwesomeIcon icon={faFlag} title="Flagged" className="email-icon-glow-flag" />
+                  )}
+                  {email.isDeleted && (
+                    <FontAwesomeIcon icon={faTrash} title="Deleted" />
+                  )}
+                </td>
+              </tr>
+            </CSSTransition>
           ))}
         </tbody>
       </Table>
