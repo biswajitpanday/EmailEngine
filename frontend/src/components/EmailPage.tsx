@@ -7,7 +7,7 @@ import {
   Alert,
   Spinner,
 } from "react-bootstrap";
-import { CSSTransition } from 'react-transition-group';
+import { CSSTransition } from "react-transition-group";
 import AxiosWrapper from "../utils/AxiosWrapper";
 import { useMsal } from "@azure/msal-react";
 import { useNavigate } from "react-router-dom";
@@ -32,31 +32,41 @@ const EmailPage: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState("Connected");
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [nextLink, setNextLink] = useState<string | null>(null);
   const axiosWrapper = new AxiosWrapper(AppConst.API_BASEURL, true);
 
   const navigate = useNavigate();
   const { accounts } = useMsal();
   const isAuthenticated = accounts.length > 0;
 
+  const fetchEmails = async (skipToken?: string) => {
+    setSyncStatus("Syncing...");
+    try {
+      const response = await axiosWrapper.get("email/get", {
+        params: { skipToken },
+      });
+      setEmails((prevEmails) => [...prevEmails, ...response.data.emails]);
+      setNextLink(response.data.nextLink || null);
+      setSyncStatus("Completed");
+    } catch (error: any) {
+      console.error("Error fetching emails", error);
+      setSyncStatus("Error");
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/");
+    } else {
+      fetchEmails();
     }
-
-    const fetchEmails = async () => {
-      setSyncStatus("Syncing...");
-      try {
-        const response = await axiosWrapper.get("email/get");
-        setEmails(response.data);
-        setSyncStatus("Completed");
-      } catch (error: any) {
-        console.error("Error fetching emails", error);
-        setSyncStatus("Error");
-      }
-    };
-
-    fetchEmails();
   }, [isAuthenticated, navigate]);
+
+  const loadMoreEmails = async () => {
+    if (nextLink) {
+      await fetchEmails(nextLink);
+    }
+  };
 
   const handleEmailCreated = useCallback(
     debounce((email: Email) => {
@@ -115,7 +125,7 @@ const EmailPage: React.FC = () => {
       setRetryCount(0);
     });
 
-    socket.on("disconnect", (reason) => {
+    socket.on("disconnect", (reason: any) => {
       console.warn("Disconnected from server:", reason);
       setConnectionStatus("Disconnected");
       attemptReconnect();
@@ -126,7 +136,7 @@ const EmailPage: React.FC = () => {
       setConnectionStatus("Reconnecting...");
     });
 
-    socket.on("connect_error", (error) => {
+    socket.on("connect_error", (error: any) => {
       console.error("Connection error:", error);
       setConnectionStatus("Connection Error");
       attemptReconnect();
@@ -210,9 +220,17 @@ const EmailPage: React.FC = () => {
                 <td>{email.sender.emailAddress.name}</td>
                 <td>
                   {email.isRead ? (
-                    <FontAwesomeIcon icon={faEnvelopeOpen} title="Read" className="email-icon-glow-read" />
+                    <FontAwesomeIcon
+                      icon={faEnvelopeOpen}
+                      title="Read"
+                      className="email-icon-glow-read"
+                    />
                   ) : (
-                    <FontAwesomeIcon icon={faEnvelope} title="Unread" className="email-icon-glow-read" />
+                    <FontAwesomeIcon
+                      icon={faEnvelope}
+                      title="Unread"
+                      className="email-icon-glow-read"
+                    />
                   )}
                   {email.isMoved && (
                     <FontAwesomeIcon
@@ -224,7 +242,11 @@ const EmailPage: React.FC = () => {
                 </td>
                 <td>
                   {email.isFlagged && (
-                    <FontAwesomeIcon icon={faFlag} title="Flagged" className="email-icon-glow-flag" />
+                    <FontAwesomeIcon
+                      icon={faFlag}
+                      title="Flagged"
+                      className="email-icon-glow-flag"
+                    />
                   )}
                   {email.isDeleted && (
                     <FontAwesomeIcon icon={faTrash} title="Deleted" />
@@ -235,6 +257,11 @@ const EmailPage: React.FC = () => {
           ))}
         </tbody>
       </Table>
+      {nextLink && (
+        <Button onClick={loadMoreEmails} variant="primary">
+          Load More
+        </Button>
+      )}
       <Modal show={showModal} onHide={handleCloseModal} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>{selectedEmail?.subject}</Modal.Title>

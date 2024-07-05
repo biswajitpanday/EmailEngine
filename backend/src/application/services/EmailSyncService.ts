@@ -18,18 +18,23 @@ export class EmailSyncService implements IEmailSyncService {
     @inject(TYPES.UserRepository) private userRepository: IUserRepository,
   ) {}
 
-  public async synchronizeEmails(accessToken: string): Promise<void> {
+  public async synchronizeEmails(
+    accessToken: string,
+    skipToken?: string,
+  ): Promise<{ emails: any[]; nextLink: string | null }> {
     const client = GraphClient.getClient(accessToken);
+    const emailFetchUrl = skipToken ? skipToken : '/me/messages';
 
     try {
-      const response = await client.api('/me/messages').get();
+      const response = await client.api(emailFetchUrl).get();
       const emails = response.value;
+      const nextLink = response['@odata.nextLink'];
       const user = await client.api('/me').get();
       const userEmail = user.mail || user.userPrincipalName;
       await this.storeEmail(userEmail, emails);
       await this.createSubscription(accessToken, userEmail);
       this.updateEmailProperties(emails);
-      return emails;
+      return { emails, nextLink };
     } catch (error: any) {
       throw new Error(`Error synchronizing emails: ${error?.message}`);
     }

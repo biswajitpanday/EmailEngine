@@ -15,8 +15,13 @@ export class EmailController {
   public async getEmails(req: Request, res: Response): Promise<void> {
     try {
       const accessToken = this.extractToken(req, res);
-      const emails = await this.emailSyncService.synchronizeEmails(accessToken);
-      res.json(emails);
+      const skipToken = req.query.skipToken as string;
+      if (!accessToken) {
+        res.status(401).send('Access token is missing');
+      }
+      const { emails, nextLink } =
+        await this.emailSyncService.synchronizeEmails(accessToken, skipToken);
+      res.json({ emails, nextLink });
     } catch (error: any) {
       res.status(500).json({ error: error?.message });
     }
