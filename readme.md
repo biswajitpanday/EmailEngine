@@ -35,7 +35,7 @@
     Create a .env file in the root directory and add the following variables:
 
     ```env
-    NODE_ENV=development [development | Production]
+    NODE_ENV=production [development | Production]   <Select production for Docker & development for debugging in local>
     CORS_ORIGIN=http://localhost:3001
     PORT=3000
     ELASTICSEARCH_HOST=http://host.docker.internal:9200
