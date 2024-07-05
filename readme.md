@@ -26,8 +26,8 @@
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/your-username/emailengine.git
-    cd emailengine
+    git clone https://github.com/biswajitpanday/EmailEngine.git
+    cd EmailEngine
     ```
 
 2. **Set up environment variables:**
