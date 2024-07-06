@@ -4,7 +4,7 @@ export type Email = {
   id: string;
   userId: string;
   subject: string;
-  body: string;
+  body: any;
   from: string;
   to: string[];
   receivedDateTime: any;
@@ -19,4 +19,6 @@ export type Email = {
   isDraft?: boolean;
   bodyPreview: any;
   webLink?: string;
+  parentFolderId?: string;
+  flag?: any;
 };

@@ -4,7 +4,7 @@ export class EmailSyncModel extends ElasticSearchDocument {
   public userId: string;
   public emailId: string;
   public subject: string;
-  public body: string;
+  public body: any;
   public from: string;
   public to: string[];
   public receivedDateTime: string;
@@ -19,6 +19,7 @@ export class EmailSyncModel extends ElasticSearchDocument {
   public lastModifiedDateTime?: string;
   public isDraft?: boolean;
   public webLink?: string;
+  public flag?: any;
 
   /**
    * EmailSync model constructor
@@ -39,12 +40,13 @@ export class EmailSyncModel extends ElasticSearchDocument {
    * @param isDraft - Email Is Draft
    * @param lastModifiedDateTime - LastModified date and time
    * @param webLink - Web Link
+   * @param flag - Flags
    */
   constructor(
     userId: string,
     emailId: string,
     subject: string,
-    body: string,
+    body: any,
     from: string,
     to: string[],
     receivedDateTime: string,
@@ -59,6 +61,7 @@ export class EmailSyncModel extends ElasticSearchDocument {
     isDraft?: boolean,
     lastModifiedDateTime?: string,
     webLink?: string,
+    flag?: any,
   ) {
     super();
     this.userId = userId;
@@ -79,5 +82,6 @@ export class EmailSyncModel extends ElasticSearchDocument {
     this.lastModifiedDateTime = lastModifiedDateTime;
     this.isDraft = isDraft;
     this.webLink = webLink;
+    this.flag = flag;
   }
 }

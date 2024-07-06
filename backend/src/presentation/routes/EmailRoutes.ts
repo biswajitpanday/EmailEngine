@@ -24,6 +24,13 @@ router.get(
   ),
 );
 
+router.get(
+  '/emailsByFolder',
+  asyncHandler((req: Request, res: Response) =>
+    emailController.getEmailsByFolder(req, res),
+  ),
+);
+
 router.post(
   '/listen',
   asyncHandler((req: Request, res: Response) =>

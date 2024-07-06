@@ -9,7 +9,7 @@ export class EmailController {
   constructor(
     @inject(TYPES.EmailSyncService)
     private emailSyncService: IEmailSyncService,
-  ) {}
+  ) { }
 
   @httpGet('/get')
   public async getEmails(req: Request, res: Response): Promise<void> {
@@ -24,6 +24,23 @@ export class EmailController {
       res.json({ emails, nextLink });
     } catch (error: any) {
       res.status(500).json({ error: error?.message });
+    }
+  }
+
+  @httpGet('/emailsByFolder')
+  public async getEmailsByFolder(req: Request, res: Response): Promise<void> {
+    const accessToken = req.headers.authorization?.split(' ')[1];
+
+    if (!accessToken) {
+      res.status(401).send('Access token is missing');
+    }
+
+    try {
+      const emailsByFolder =
+        await this.emailSyncService.synchronizeEmailsByFolder(accessToken!);
+      res.json(emailsByFolder);
+    } catch (error: any) {
+      res.status(500).send(error.message);
     }
   }
 

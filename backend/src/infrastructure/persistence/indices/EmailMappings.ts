@@ -19,6 +19,7 @@ const emailMappings = {
       lastModifiedDateTime: { type: 'date' },
       isDraft: { type: 'boolean' },
       webLink: { type: 'text' },
+      flag: { type: 'text' },
     },
   },
 };

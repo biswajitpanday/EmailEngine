@@ -6,6 +6,12 @@ import {
   Table,
   Alert,
   Spinner,
+  Col,
+  Row,
+  ListGroup,
+  Badge,
+  Card,
+  ListGroupItem,
 } from "react-bootstrap";
 import { CSSTransition } from "react-transition-group";
 import AxiosWrapper from "../utils/AxiosWrapper";
@@ -19,15 +25,16 @@ import {
   faEnvelopeOpen,
   faFlag,
   faTrash,
-  faFolder,
 } from "@fortawesome/free-solid-svg-icons";
 import { AppConst } from "../utils/AppConstant";
 import { debounce } from "lodash";
 
 const EmailPage: React.FC = () => {
-  const [emails, setEmails] = useState<Email[]>([]);
+  const [emailsByFolder, setEmailsByFolder] = useState<{
+    [folderName: string]: Email[];
+  }>({});
+  const [selectedFolder, setSelectedFolder] = useState<string | null>("Inbox");
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
-  const [showModal, setShowModal] = useState(false);
   const [syncStatus, setSyncStatus] = useState("Not Started");
   const [connectionStatus, setConnectionStatus] = useState("Connected");
   const [retryCount, setRetryCount] = useState(0);
@@ -39,14 +46,38 @@ const EmailPage: React.FC = () => {
   const { accounts } = useMsal();
   const isAuthenticated = accounts.length > 0;
 
+  const fetchEmailsByFolder = async () => {
+    setSyncStatus("Syncing...");
+    try {
+      const response = await axiosWrapper.get("email/emailsByFolder");
+      setEmailsByFolder(response.data);
+      setSyncStatus("Completed");
+    } catch (error: any) {
+      console.error("Error fetching emails by folder", error);
+      setSyncStatus("Error");
+    }
+  };
+
   const fetchEmails = async (skipToken?: string) => {
     setSyncStatus("Syncing...");
     try {
       const response = await axiosWrapper.get("email/get", {
         params: { skipToken },
       });
-      setEmails((prevEmails) => [...prevEmails, ...response.data.emails]);
-      setNextLink(response.data.nextLink || null);
+      // Assuming response.data is in the correct format
+      const { emails, nextLink } = response.data;
+      const updatedEmailsByFolder = { ...emailsByFolder };
+
+      emails.forEach((email: Email) => {
+        const folderName = email.parentFolderId || "Others";
+        if (!updatedEmailsByFolder[folderName]) {
+          updatedEmailsByFolder[folderName] = [];
+        }
+        updatedEmailsByFolder[folderName].push(email);
+      });
+
+      setEmailsByFolder(updatedEmailsByFolder);
+      setNextLink(nextLink || null);
       setSyncStatus("Completed");
     } catch (error: any) {
       console.error("Error fetching emails", error);
@@ -58,7 +89,7 @@ const EmailPage: React.FC = () => {
     if (!isAuthenticated) {
       navigate("/");
     } else {
-      fetchEmails();
+      fetchEmailsByFolder();
     }
   }, [isAuthenticated, navigate]);
 
@@ -71,19 +102,31 @@ const EmailPage: React.FC = () => {
   const handleEmailCreated = useCallback(
     debounce((email: Email) => {
       console.log(`emailCreated Event: ${email}`);
-      setEmails((prevEmails) => [email, ...prevEmails]);
+      setEmailsByFolder((prevEmailsByFolder) => {
+        const folderName = email.parentFolderId || "Others";
+        return {
+          ...prevEmailsByFolder,
+          [folderName]: [email, ...(prevEmailsByFolder[folderName] || [])],
+        };
+      });
     }, 300),
     []
   );
 
   const handleEmailUpdated = useCallback(
     debounce((updatedEmail: Email) => {
+      debugger;
       console.log(`emailUpdated Event: ${updatedEmail}`);
-      setEmails((prevEmails) =>
-        prevEmails.map((email) =>
-          email.id === updatedEmail.id ? updatedEmail : email
-        )
-      );
+      setEmailsByFolder((prevEmailsByFolder) => {
+        debugger;
+        const folderName = updatedEmail.parentFolderId || "Others";
+        return {
+          ...prevEmailsByFolder,
+          [folderName]: prevEmailsByFolder[folderName].map((email) =>
+            email.id === updatedEmail.id ? updatedEmail : email
+          ),
+        };
+      });
     }, 300),
     []
   );
@@ -91,9 +134,15 @@ const EmailPage: React.FC = () => {
   const handleEmailDeleted = useCallback(
     debounce((emailId: string) => {
       console.log(`emailDeleted Event: ${emailId}`);
-      setEmails((prevEmails) =>
-        prevEmails.filter((email) => email.id !== emailId)
-      );
+      setEmailsByFolder((prevEmailsByFolder) => {
+        const updatedEmailsByFolder = { ...prevEmailsByFolder };
+        Object.keys(updatedEmailsByFolder).forEach((folderName) => {
+          updatedEmailsByFolder[folderName] = updatedEmailsByFolder[
+            folderName
+          ].filter((email) => email.id !== emailId);
+        });
+        return updatedEmailsByFolder;
+      });
     }, 300),
     []
   );
@@ -162,133 +211,202 @@ const EmailPage: React.FC = () => {
     handleEmailDeleted,
   ]);
 
+  const handleFolderClick = (folderName: string) => {
+    setSelectedFolder(folderName);
+    setSelectedEmail(null); // Clear selected email when folder changes
+  };
+
   const handleRowClick = (email: Email) => {
     setSelectedEmail(email);
-    setShowModal(true);
   };
 
   const handleCloseModal = () => {
-    setShowModal(false);
     setSelectedEmail(null);
   };
 
+  const folderOrder = [
+    "Inbox",
+    "Drafts",
+    "Sent Items",
+    "Deleted Items",
+    "Junk Email",
+    "Archive",
+  ];
+
+  const customFolders = Object.keys(emailsByFolder).filter(
+    (folderName) => !folderOrder.includes(folderName)
+  );
+
+  const getStatusBarColor = () => {
+    if (connectionStatus === "Connected" && syncStatus === "Completed") {
+      return "bg-success text-white";
+    } else if (connectionStatus !== "Connected" && syncStatus !== "Completed") {
+      return "bg-danger text-white";
+    } else {
+      return "bg-warning text-dark";
+    }
+  };
+
+  const getDisconnectionTextColor = () => {
+    if (connectionStatus !== "Connected") {
+      return "text-danger";
+    }
+    return "";
+  };
+
   return (
-    <Container className="main-content">
-      <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 className="h2">Email Data Synchronization</h1>
-        <p className="lead">
-          <small>Sync-Status: {syncStatus}</small>
-        </p>
-        <p className="lead">
-          <small>Connection Status: {connectionStatus}</small>
-        </p>
-        {isRetrying && (
-          <p className="lead">
-            <small>Retrying to connect... (Attempt {retryCount})</small>
-            <Spinner animation="border" size="sm" />
-          </p>
-        )}
-        {connectionStatus !== "Connected" && !isRetrying && (
-          <Button onClick={attemptReconnect} variant="primary">
-            Retry Connection
-          </Button>
-        )}
+    <Container fluid className="p-0">
+      <div
+        className={`p-2 d-flex justify-content-between ${getStatusBarColor()}`}
+      >
+        <div>
+          <strong>Sync Status: </strong>
+          {syncStatus}
+        </div>
+        <div>
+          <strong>Connection Status: </strong>
+          <span className={getDisconnectionTextColor()}>
+            {connectionStatus}
+          </span>
+          {isRetrying && (
+            <span className="ml-2">
+              (Retrying... {retryCount})
+              <Spinner animation="border" size="sm" className="ml-1" />
+            </span>
+          )}
+        </div>
       </div>
-      {connectionStatus !== "Connected" && (
-        <Alert variant="danger">Connection issue: {connectionStatus}</Alert>
-      )}
-      <Table bordered striped hover responsive>
-        <thead className="thead-light">
-          <tr>
-            <th>Subject</th>
-            <th>Sender name</th>
-            <th>Status</th>
-            <th>Flag</th>
-          </tr>
-        </thead>
-        <tbody>
-          {emails.map((email) => (
-            <CSSTransition key={email.id} timeout={500} classNames="email-new">
-              <tr
-                key={email.id}
-                onClick={() => handleRowClick(email)}
-                className="cursor-pointer"
+      <Row className="m-0">
+        <Col md={2} className="bg-light border-right p-0">
+          <ListGroup variant="flush">
+            {folderOrder.map((folderName) => (
+              <ListGroup.Item
+                key={folderName}
+                action
+                onClick={() => handleFolderClick(folderName)}
+                active={folderName === selectedFolder}
+                className="d-flex justify-content-between align-items-center"
               >
-                <td>
-                  <strong>{email.subject}</strong>
-                </td>
-                <td>{email.sender.emailAddress.name}</td>
-                <td>
-                  {email.isRead ? (
-                    <FontAwesomeIcon
-                      icon={faEnvelopeOpen}
-                      title="Read"
-                      className="email-icon-glow-read"
-                    />
-                  ) : (
-                    <FontAwesomeIcon
-                      icon={faEnvelope}
-                      title="Unread"
-                      className="email-icon-glow-read"
-                    />
-                  )}
-                  {email.isMoved && (
-                    <FontAwesomeIcon
-                      icon={faFolder}
-                      title="Moved"
-                      className="ml-2"
-                    />
-                  )}
-                </td>
-                <td>
-                  {email.isFlagged && (
-                    <FontAwesomeIcon
-                      icon={faFlag}
-                      title="Flagged"
-                      className="email-icon-glow-flag"
-                    />
-                  )}
-                  {email.isDeleted && (
-                    <FontAwesomeIcon icon={faTrash} title="Deleted" />
-                  )}
-                </td>
-              </tr>
-            </CSSTransition>
-          ))}
-        </tbody>
-      </Table>
+                {folderName}
+                <Badge bg="secondary">
+                  {emailsByFolder[folderName]?.length || 0}
+                </Badge>
+              </ListGroup.Item>
+            ))}
+            <ListGroup.Item className="mt-3">
+              <strong>Folders</strong>
+            </ListGroup.Item>
+            {customFolders.map((folderName) => (
+              <ListGroup.Item
+                key={folderName}
+                action
+                onClick={() => handleFolderClick(folderName)}
+                active={folderName === selectedFolder}
+                className="d-flex justify-content-between align-items-center"
+              >
+                {folderName}
+                <Badge bg="secondary">
+                  {emailsByFolder[folderName]?.length || 0}
+                </Badge>
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+        </Col>
+        <Col md={3} className="p-0">
+          {selectedFolder ? (
+            <Card className="h-100">
+            <Card.Body className="p-0">
+              <ListGroup variant="flush">
+                {emailsByFolder[selectedFolder]?.map((email) => (
+                  <ListGroupItem
+                    key={email.id}
+                    onClick={() => handleRowClick(email)}
+                    className="d-flex justify-content-between align-items-start cursor-pointer"
+                  >
+                    <div className="email-details">
+                      <span className={!email.isRead ? "fw-bold" : ""}>
+                        {email.subject}
+                      </span>
+                      <br />
+                      <small>{email.sender.emailAddress.name}</small>
+                    </div>
+                    <div className="email-status d-flex align-items-center">
+                      {email.isRead ? (
+                        <FontAwesomeIcon
+                          icon={faEnvelopeOpen}
+                          title="Read"
+                          className="email-icon-glow-read me-2"
+                        />
+                      ) : (
+                        <FontAwesomeIcon
+                          icon={faEnvelope}
+                          title="Unread"
+                          className="email-icon-glow-unread me-2"
+                        />
+                      )}
+                      <FontAwesomeIcon
+                        icon={faFlag}
+                        title="Flagged"
+                        className={
+                          `ms-2 ` +
+                          (email.flag?.flagStatus === "flagged"
+                            ? "email-icon-glow-flag"
+                            : "")
+                        }
+                      />
+                      {email.isDeleted && (
+                        <FontAwesomeIcon
+                          icon={faTrash}
+                          title="Deleted"
+                          className="ms-2"
+                        />
+                      )}
+                    </div>
+                  </ListGroupItem>
+                ))}
+              </ListGroup>
+            </Card.Body>
+          </Card>
+          ) : (
+            <p className="p-3">Select a folder to view emails</p>
+          )}
+        </Col>
+        <Col md={7} className="p-0">
+          {selectedEmail ? (
+            <Card className="h-100">
+              <Card.Body>
+                <h5>{selectedEmail.subject}</h5>
+                <p>
+                  <strong>From:</strong>{" "}
+                  {selectedEmail.sender.emailAddress.name}
+                </p>
+                <p>
+                  <strong>Email:</strong>{" "}
+                  {selectedEmail.sender.emailAddress.address}
+                </p>
+                <p>
+                  <strong>Received:</strong> {selectedEmail.receivedDateTime}
+                </p>
+                <div>
+                  <strong>Body:</strong>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: selectedEmail.body.content,
+                    }}
+                  />
+                </div>
+              </Card.Body>
+            </Card>
+          ) : (
+            <p className="p-3">Select an email to view its details</p>
+          )}
+        </Col>
+      </Row>
       {nextLink && (
         <Button onClick={loadMoreEmails} variant="primary">
           Load More
         </Button>
       )}
-      <Modal show={showModal} onHide={handleCloseModal} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>{selectedEmail?.subject}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>
-            <strong>From:</strong> {selectedEmail?.sender.emailAddress.name}
-          </p>
-          <p>
-            <strong>Email:</strong> {selectedEmail?.sender.emailAddress.address}
-          </p>
-          <p>
-            <strong>Received:</strong> {selectedEmail?.receivedDateTime}
-          </p>
-          <div>
-            <strong>Body:</strong>
-            <div
-              dangerouslySetInnerHTML={{ __html: selectedEmail?.bodyPreview }}
-            />
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button type="button" variant="secondary" onClick={handleCloseModal}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </Container>
   );
 };

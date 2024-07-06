@@ -16,7 +16,7 @@ export class EmailSyncService implements IEmailSyncService {
     @inject(TYPES.EmailSyncRepository)
     private emailSyncRepository: IEmailSyncRepository,
     @inject(TYPES.UserRepository) private userRepository: IUserRepository,
-  ) {}
+  ) { }
 
   public async synchronizeEmails(
     accessToken: string,
@@ -37,6 +37,37 @@ export class EmailSyncService implements IEmailSyncService {
       return { emails, nextLink };
     } catch (error: any) {
       throw new Error(`Error synchronizing emails: ${error?.message}`);
+    }
+  }
+
+  public async synchronizeEmailsByFolder(
+    accessToken: string,
+  ): Promise<{ [folderName: string]: any[] }> {
+    const client = GraphClient.getClient(accessToken);
+    const emailsByFolder: { [folderName: string]: any[] } = {};
+
+    try {
+      const foldersResponse = await client.api('/me/mailFolders').get();
+      const folders = foldersResponse.value;
+
+      const user = await client.api('/me').get();
+      const userEmail = user.mail || user.userPrincipalName;
+      // await this.storeEmail(userEmail, emails);
+      await this.createSubscription(accessToken, userEmail);
+      // this.updateEmailProperties(emails);
+
+      for (const folder of folders) {
+        const folderEmailsResponse = await client
+          .api(`/me/mailFolders/${folder.id}/messages`)
+          .get();
+        emailsByFolder[folder.displayName] = folderEmailsResponse.value;
+      }
+
+      return emailsByFolder;
+    } catch (error: any) {
+      throw new Error(
+        `Error synchronizing emails by folder: ${error?.message}`,
+      );
     }
   }
 

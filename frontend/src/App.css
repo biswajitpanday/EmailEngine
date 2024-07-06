@@ -58,3 +58,17 @@
     box-shadow: 0 0 5px #2b88d8;
   }
 }
+
+.email-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.email-icon-glow-read {
+  color: #007bff;
+}
+
+.table-secondary {
+  background-color: #f8f9fa;
+}
