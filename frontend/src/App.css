@@ -72,3 +72,7 @@
 .table-secondary {
   background-color: #f8f9fa;
 }
+
+.selected-email {
+  background-color: #e8f4f8;
+}

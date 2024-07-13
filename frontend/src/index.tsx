@@ -1,4 +1,5 @@
 import "bootstrap/dist/css/bootstrap.css";
+import "./index.css";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router } from "react-router-dom";
 import { MsalProvider } from "@azure/msal-react";

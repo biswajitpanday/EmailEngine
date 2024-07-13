@@ -1,10 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import {
-  Button,
   Container,
-  Modal,
-  Table,
-  Alert,
   Spinner,
   Col,
   Row,
@@ -13,7 +9,6 @@ import {
   Card,
   ListGroupItem,
 } from "react-bootstrap";
-import { CSSTransition } from "react-transition-group";
 import AxiosWrapper from "../utils/AxiosWrapper";
 import { useMsal } from "@azure/msal-react";
 import { useNavigate } from "react-router-dom";
@@ -39,9 +34,13 @@ const EmailPage: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState("Connected");
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [nextLink, setNextLink] = useState<string | null>(null);
-  const axiosWrapper = new AxiosWrapper(AppConst.API_BASEURL, true);
+  const [nextLinkByFolder, setNextLinkByFolder] = useState<{
+    [folderName: string]: string | null;
+  }>({});
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
+  const axiosWrapper = new AxiosWrapper(AppConst.API_BASEURL, true);
   const navigate = useNavigate();
   const { accounts } = useMsal();
   const isAuthenticated = accounts.length > 0;
@@ -52,32 +51,40 @@ const EmailPage: React.FC = () => {
       const response = await axiosWrapper.get("email/emailsByFolder");
       setEmailsByFolder(response.data);
       setSyncStatus("Completed");
+
+      // Automatically select the first email in the Inbox
+      if (response.data["Inbox"] && response.data["Inbox"].length > 0) {
+        setSelectedEmail(response.data["Inbox"][0]);
+      }
     } catch (error: any) {
       console.error("Error fetching emails by folder", error);
       setSyncStatus("Error");
     }
   };
 
-  const fetchEmails = async (skipToken?: string) => {
+  const fetchEmails = async (folderName: string, skipToken?: string) => {
     setSyncStatus("Syncing...");
     try {
       const response = await axiosWrapper.get("email/get", {
         params: { skipToken },
       });
-      // Assuming response.data is in the correct format
       const { emails, nextLink } = response.data;
-      const updatedEmailsByFolder = { ...emailsByFolder };
+      setEmailsByFolder((prevEmailsByFolder) => {
+        const updatedEmailsByFolder = { ...prevEmailsByFolder };
 
-      emails.forEach((email: Email) => {
-        const folderName = email.parentFolderId || "Others";
-        if (!updatedEmailsByFolder[folderName]) {
-          updatedEmailsByFolder[folderName] = [];
-        }
-        updatedEmailsByFolder[folderName].push(email);
+        emails.forEach((email: Email) => {
+          if (!updatedEmailsByFolder[folderName]) {
+            updatedEmailsByFolder[folderName] = [];
+          }
+          updatedEmailsByFolder[folderName].push(email);
+        });
+
+        return updatedEmailsByFolder;
       });
-
-      setEmailsByFolder(updatedEmailsByFolder);
-      setNextLink(nextLink || null);
+      setNextLinkByFolder((prevNextLinks) => ({
+        ...prevNextLinks,
+        [folderName]: nextLink || null,
+      }));
       setSyncStatus("Completed");
     } catch (error: any) {
       console.error("Error fetching emails", error);
@@ -93,9 +100,9 @@ const EmailPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const loadMoreEmails = async () => {
-    if (nextLink) {
-      await fetchEmails(nextLink);
+  const loadMoreEmails = async (folderName: string) => {
+    if (nextLinkByFolder[folderName]) {
+      await fetchEmails(folderName, nextLinkByFolder[folderName]);
     }
   };
 
@@ -115,16 +122,14 @@ const EmailPage: React.FC = () => {
 
   const handleEmailUpdated = useCallback(
     debounce((updatedEmail: Email) => {
-      debugger;
       console.log(`emailUpdated Event: ${updatedEmail}`);
       setEmailsByFolder((prevEmailsByFolder) => {
-        debugger;
         const folderName = updatedEmail.parentFolderId || "Others";
         return {
           ...prevEmailsByFolder,
-          [folderName]: prevEmailsByFolder[folderName].map((email) =>
+          [folderName]: prevEmailsByFolder[folderName]?.map((email) =>
             email.id === updatedEmail.id ? updatedEmail : email
-          ),
+          ) || [],
         };
       });
     }, 300),
@@ -224,6 +229,24 @@ const EmailPage: React.FC = () => {
     setSelectedEmail(null);
   };
 
+  useEffect(() => {
+    if (observerRef.current) observerRef.current.disconnect();
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && selectedFolder) {
+        loadMoreEmails(selectedFolder);
+      }
+    });
+
+    if (bottomRef.current) {
+      observerRef.current.observe(bottomRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) observerRef.current.disconnect();
+    };
+  }, [selectedFolder, nextLinkByFolder]);
+
   const folderOrder = [
     "Inbox",
     "Drafts",
@@ -315,58 +338,59 @@ const EmailPage: React.FC = () => {
         <Col md={3} className="p-0">
           {selectedFolder ? (
             <Card className="h-100">
-            <Card.Body className="p-0">
-              <ListGroup variant="flush">
-                {emailsByFolder[selectedFolder]?.map((email) => (
-                  <ListGroupItem
-                    key={email.id}
-                    onClick={() => handleRowClick(email)}
-                    className="d-flex justify-content-between align-items-start cursor-pointer"
-                  >
-                    <div className="email-details">
-                      <span className={!email.isRead ? "fw-bold" : ""}>
-                        {email.subject}
-                      </span>
-                      <br />
-                      <small>{email.sender.emailAddress.name}</small>
-                    </div>
-                    <div className="email-status d-flex align-items-center">
-                      {email.isRead ? (
+              <Card.Body className="p-0">
+                <ListGroup variant="flush">
+                  {emailsByFolder[selectedFolder]?.map((email) => (
+                    <ListGroupItem
+                      key={email.id}
+                      onClick={() => handleRowClick(email)}
+                      className={`d-flex justify-content-between align-items-start cursor-pointer ${selectedEmail?.id === email.id ? "selected-email" : ""}`}
+                    >
+                      <div className="email-details">
+                        <span className={!email.isRead ? "fw-bold" : ""}>
+                          {email.subject}
+                        </span>
+                        <br />
+                        <small>{email.sender.emailAddress.name}</small>
+                      </div>
+                      <div className="email-status d-flex align-items-center">
+                        {email.isRead ? (
+                          <FontAwesomeIcon
+                            icon={faEnvelopeOpen}
+                            title="Read"
+                            className="email-icon-glow-read me-2"
+                          />
+                        ) : (
+                          <FontAwesomeIcon
+                            icon={faEnvelope}
+                            title="Unread"
+                            className="email-icon-glow-unread me-2"
+                          />
+                        )}
                         <FontAwesomeIcon
-                          icon={faEnvelopeOpen}
-                          title="Read"
-                          className="email-icon-glow-read me-2"
+                          icon={faFlag}
+                          title="Flagged"
+                          className={
+                            `ms-2 ` +
+                            (email.flag?.flagStatus === "flagged"
+                              ? "email-icon-glow-flag"
+                              : "")
+                          }
                         />
-                      ) : (
-                        <FontAwesomeIcon
-                          icon={faEnvelope}
-                          title="Unread"
-                          className="email-icon-glow-unread me-2"
-                        />
-                      )}
-                      <FontAwesomeIcon
-                        icon={faFlag}
-                        title="Flagged"
-                        className={
-                          `ms-2 ` +
-                          (email.flag?.flagStatus === "flagged"
-                            ? "email-icon-glow-flag"
-                            : "")
-                        }
-                      />
-                      {email.isDeleted && (
-                        <FontAwesomeIcon
-                          icon={faTrash}
-                          title="Deleted"
-                          className="ms-2"
-                        />
-                      )}
-                    </div>
-                  </ListGroupItem>
-                ))}
-              </ListGroup>
-            </Card.Body>
-          </Card>
+                        {email.isDeleted && (
+                          <FontAwesomeIcon
+                            icon={faTrash}
+                            title="Deleted"
+                            className="ms-2"
+                          />
+                        )}
+                      </div>
+                    </ListGroupItem>
+                  ))}
+                  <div ref={bottomRef} />
+                </ListGroup>
+              </Card.Body>
+            </Card>
           ) : (
             <p className="p-3">Select a folder to view emails</p>
           )}
@@ -402,11 +426,6 @@ const EmailPage: React.FC = () => {
           )}
         </Col>
       </Row>
-      {nextLink && (
-        <Button onClick={loadMoreEmails} variant="primary">
-          Load More
-        </Button>
-      )}
     </Container>
   );
 };
