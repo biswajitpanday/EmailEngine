@@ -1,28 +1,15 @@
 import React, { useCallback, useEffect, useState, useRef } from "react";
-import {
-  Container,
-  Spinner,
-  Col,
-  Row,
-  ListGroup,
-  Badge,
-  Card,
-  ListGroupItem,
-} from "react-bootstrap";
+import { Container, Spinner, Row, Col } from "react-bootstrap";
 import AxiosWrapper from "../utils/AxiosWrapper";
 import { useMsal } from "@azure/msal-react";
 import { useNavigate } from "react-router-dom";
 import { Email } from "../types/EmailType";
 import socket from "../utils/Socket";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faEnvelope,
-  faEnvelopeOpen,
-  faFlag,
-  faTrash,
-} from "@fortawesome/free-solid-svg-icons";
 import { AppConst } from "../utils/AppConstant";
 import { debounce } from "lodash";
+import FolderList from "./EmailComponents/FolderList";
+import EmailList from "./EmailComponents/EmailList";
+import EmailDetails from "./EmailComponents/EmailDetails";
 
 const EmailPage: React.FC = () => {
   const [emailsByFolder, setEmailsByFolder] = useState<{
@@ -52,7 +39,6 @@ const EmailPage: React.FC = () => {
       setEmailsByFolder(response.data);
       setSyncStatus("Completed");
 
-      // Automatically select the first email in the Inbox
       if (response.data["Inbox"] && response.data["Inbox"].length > 0) {
         setSelectedEmail(response.data["Inbox"][0]);
       }
@@ -122,14 +108,16 @@ const EmailPage: React.FC = () => {
 
   const handleEmailUpdated = useCallback(
     debounce((updatedEmail: Email) => {
+      debugger;
       console.log(`emailUpdated Event: ${updatedEmail}`);
       setEmailsByFolder((prevEmailsByFolder) => {
         const folderName = updatedEmail.parentFolderId || "Others";
+        const updatedEmails = prevEmailsByFolder[folderName]?.map((email) =>
+          email.id === updatedEmail.id ? updatedEmail : email
+        ) || [];
         return {
           ...prevEmailsByFolder,
-          [folderName]: prevEmailsByFolder[folderName]?.map((email) =>
-            email.id === updatedEmail.id ? updatedEmail : email
-          ) || [],
+          [folderName]: updatedEmails,
         };
       });
     }, 300),
@@ -141,11 +129,27 @@ const EmailPage: React.FC = () => {
       console.log(`emailDeleted Event: ${emailId}`);
       setEmailsByFolder((prevEmailsByFolder) => {
         const updatedEmailsByFolder = { ...prevEmailsByFolder };
+        let deletedEmail: Email | null = null;
+
         Object.keys(updatedEmailsByFolder).forEach((folderName) => {
-          updatedEmailsByFolder[folderName] = updatedEmailsByFolder[
-            folderName
-          ].filter((email) => email.id !== emailId);
+          updatedEmailsByFolder[folderName] = updatedEmailsByFolder[folderName].filter(
+            (email) => {
+              if (email.id === emailId) {
+                deletedEmail = email;
+                return false;
+              }
+              return true;
+            }
+          );
         });
+
+        if (deletedEmail) {
+          if (!updatedEmailsByFolder["Deleted Items"]) {
+            updatedEmailsByFolder["Deleted Items"] = [];
+          }
+          updatedEmailsByFolder["Deleted Items"].unshift(deletedEmail);
+        }
+
         return updatedEmailsByFolder;
       });
     }, 300),
@@ -218,15 +222,11 @@ const EmailPage: React.FC = () => {
 
   const handleFolderClick = (folderName: string) => {
     setSelectedFolder(folderName);
-    setSelectedEmail(null); // Clear selected email when folder changes
+    setSelectedEmail(null);
   };
 
   const handleRowClick = (email: Email) => {
     setSelectedEmail(email);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedEmail(null);
   };
 
   useEffect(() => {
@@ -291,6 +291,7 @@ const EmailPage: React.FC = () => {
           <span className={getDisconnectionTextColor()}>
             {connectionStatus}
           </span>
+          <span>-------{"" + isRetrying}</span>
           {isRetrying && (
             <span className="ml-2">
               (Retrying... {retryCount})
@@ -301,126 +302,29 @@ const EmailPage: React.FC = () => {
       </div>
       <Row className="m-0">
         <Col md={2} className="bg-light border-right p-0">
-          <ListGroup variant="flush">
-            {folderOrder.map((folderName) => (
-              <ListGroup.Item
-                key={folderName}
-                action
-                onClick={() => handleFolderClick(folderName)}
-                active={folderName === selectedFolder}
-                className="d-flex justify-content-between align-items-center"
-              >
-                {folderName}
-                <Badge bg="secondary">
-                  {emailsByFolder[folderName]?.length || 0}
-                </Badge>
-              </ListGroup.Item>
-            ))}
-            <ListGroup.Item className="mt-3">
-              <strong>Folders</strong>
-            </ListGroup.Item>
-            {customFolders.map((folderName) => (
-              <ListGroup.Item
-                key={folderName}
-                action
-                onClick={() => handleFolderClick(folderName)}
-                active={folderName === selectedFolder}
-                className="d-flex justify-content-between align-items-center"
-              >
-                {folderName}
-                <Badge bg="secondary">
-                  {emailsByFolder[folderName]?.length || 0}
-                </Badge>
-              </ListGroup.Item>
-            ))}
-          </ListGroup>
+          <FolderList
+            folderOrder={folderOrder}
+            customFolders={customFolders}
+            emailsByFolder={emailsByFolder}
+            selectedFolder={selectedFolder}
+            handleFolderClick={handleFolderClick}
+          />
         </Col>
         <Col md={3} className="p-0">
           {selectedFolder ? (
-            <Card className="h-100">
-              <Card.Body className="p-0">
-                <ListGroup variant="flush">
-                  {emailsByFolder[selectedFolder]?.map((email) => (
-                    <ListGroupItem
-                      key={email.id}
-                      onClick={() => handleRowClick(email)}
-                      className={`d-flex justify-content-between align-items-start cursor-pointer ${selectedEmail?.id === email.id ? "selected-email" : ""}`}
-                    >
-                      <div className="email-details">
-                        <span className={!email.isRead ? "fw-bold" : ""}>
-                          {email.subject}
-                        </span>
-                        <br />
-                        <small>{email.sender.emailAddress.name}</small>
-                      </div>
-                      <div className="email-status d-flex align-items-center">
-                        {email.isRead ? (
-                          <FontAwesomeIcon
-                            icon={faEnvelopeOpen}
-                            title="Read"
-                            className="email-icon-glow-read me-2"
-                          />
-                        ) : (
-                          <FontAwesomeIcon
-                            icon={faEnvelope}
-                            title="Unread"
-                            className="email-icon-glow-unread me-2"
-                          />
-                        )}
-                        <FontAwesomeIcon
-                          icon={faFlag}
-                          title="Flagged"
-                          className={
-                            `ms-2 ` +
-                            (email.flag?.flagStatus === "flagged"
-                              ? "email-icon-glow-flag"
-                              : "")
-                          }
-                        />
-                        {email.isDeleted && (
-                          <FontAwesomeIcon
-                            icon={faTrash}
-                            title="Deleted"
-                            className="ms-2"
-                          />
-                        )}
-                      </div>
-                    </ListGroupItem>
-                  ))}
-                  <div ref={bottomRef} />
-                </ListGroup>
-              </Card.Body>
-            </Card>
+            <EmailList
+              emails={emailsByFolder[selectedFolder] || []}
+              selectedEmail={selectedEmail}
+              handleRowClick={handleRowClick}
+              bottomRef={bottomRef}
+            />
           ) : (
             <p className="p-3">Select a folder to view emails</p>
           )}
         </Col>
         <Col md={7} className="p-0">
           {selectedEmail ? (
-            <Card className="h-100">
-              <Card.Body>
-                <h5>{selectedEmail.subject}</h5>
-                <p>
-                  <strong>From:</strong>{" "}
-                  {selectedEmail.sender.emailAddress.name}
-                </p>
-                <p>
-                  <strong>Email:</strong>{" "}
-                  {selectedEmail.sender.emailAddress.address}
-                </p>
-                <p>
-                  <strong>Received:</strong> {selectedEmail.receivedDateTime}
-                </p>
-                <div>
-                  <strong>Body:</strong>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: selectedEmail.body.content,
-                    }}
-                  />
-                </div>
-              </Card.Body>
-            </Card>
+            <EmailDetails selectedEmail={selectedEmail} />
           ) : (
             <p className="p-3">Select an email to view its details</p>
           )}
