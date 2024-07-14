@@ -16,7 +16,7 @@ export class EmailSyncService implements IEmailSyncService {
     @inject(TYPES.EmailSyncRepository)
     private emailSyncRepository: IEmailSyncRepository,
     @inject(TYPES.UserRepository) private userRepository: IUserRepository,
-  ) { }
+  ) {}
 
   public async synchronizeEmails(
     accessToken: string,

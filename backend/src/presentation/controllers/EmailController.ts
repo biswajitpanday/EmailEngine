@@ -9,7 +9,7 @@ export class EmailController {
   constructor(
     @inject(TYPES.EmailSyncService)
     private emailSyncService: IEmailSyncService,
-  ) { }
+  ) {}
 
   @httpGet('/get')
   public async getEmails(req: Request, res: Response): Promise<void> {
