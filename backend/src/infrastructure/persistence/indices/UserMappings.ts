@@ -1,9 +1,12 @@
 const userMappings = {
   mappings: {
     properties: {
+      id: { type: 'keyword' },
+      name: { type: 'text' },
       email: { type: 'keyword' },
-      password: { type: 'text' },
-      outlookToken: { type: 'text' },
+      isSynced: { type: 'text' },
+      lastSyncToken: { type: 'keyword' },
+      authToken: { type: 'text' },
       refreshToken: { type: 'text' },
     },
   },

@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 import { IAuthService } from '../interfaces/IAuthService';
-import { OnBehalfOfCredential } from '@azure/identity';
+import { AccessToken, OnBehalfOfCredential } from '@azure/identity';
 import AppConst from '../../utils/Constants';
 import { TYPES } from '../../infrastructure/di/types';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
@@ -13,7 +13,7 @@ class AuthService implements IAuthService {
   constructor(
     @inject(TYPES.UserRepository) private userRepository: IUserRepository,
   ) {}
-  public async getOnBehalfToken(idToken: string): Promise<string> {
+  public async getOnBehalfToken(idToken: string): Promise<AccessToken> {
     try {
       const oboCredential = new OnBehalfOfCredential({
         tenantId: 'common',
@@ -21,27 +21,27 @@ class AuthService implements IAuthService {
         clientSecret: AppConst.OutlookClientSecret,
         userAssertionToken: idToken,
       });
-      const tokenResponse = await oboCredential.getToken([
+      const accessToken = await oboCredential.getToken([
         'https://graph.microsoft.com/.default',
       ]);
-      await this.storeUser(tokenResponse.token);
-      return tokenResponse.token;
+      await this.storeUser(accessToken.token);
+      return accessToken;
     } catch (error: any) {
       throw error?.message;
     }
   }
 
-  private async storeUser(token: string): Promise<void> {
+  private async storeUser(accessToken: string): Promise<void> {
     const client = Client.init({
       authProvider: (done) => {
-        done(null, token);
+        done(null, accessToken);
       },
     });
     try {
       const user = await client.api('/me').get();
       const email = user.mail || user.userPrincipalName;
       const existingUser = await this.userRepository.findByEmail(email);
-      const userModel = new UserModel(email, undefined, token);
+      const userModel = new UserModel(email, accessToken, accessToken); // Todo: Last param should be Refresh Token.
       if (existingUser != null) {
         this.userRepository.update(existingUser.id!, userModel);
       } else {

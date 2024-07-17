@@ -7,7 +7,7 @@ import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncReposito
 import NgrokService from '../../infrastructure/config/NgrokService';
 import { GraphClient } from '../../infrastructure/config/GraphClient';
 import { Socket } from '../../infrastructure/config/Socket';
-import { EmailSyncModel } from '../../infrastructure/persistence/documents/EmailSyncModel';
+import { EmailModel } from '../../infrastructure/persistence/documents/EmailModel';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
 
 @injectable()
@@ -26,7 +26,7 @@ export class EmailSyncService implements IEmailSyncService {
       const emails = response.value;
       const user = await client.api('/me').get();
       const userEmail = user.mail || user.userPrincipalName;
-      await this.storeEmail(userEmail, emails);
+      await this.storeEmails(userEmail, emails);
       await this.createSubscription(accessToken, userEmail);
       this.updateEmailProperties(emails);
       return emails;
@@ -93,37 +93,53 @@ export class EmailSyncService implements IEmailSyncService {
       email.parentFolderId !== email.originalFolderId); // Check if folders differ);
   }
 
-  private async storeEmail(userEmail: string, emails: any[]): Promise<void> {
+  private async storeEmails(userEmail: string, emails: any[]): Promise<void> {
     try {
       const user = await this.userRepository.findByEmail(userEmail);
       const userId = user?.id;
-      await emails.forEach(async (email: any) => {
-        const emailId = email.id;
-        const emailDocument = new EmailSyncModel(
-          userId!,
-          emailId,
-          email.subject,
-          email.bodyPreview,
-          email.from.emailAddress.address,
-          email.toRecipients.map(
-            (recipient: any) => recipient.emailAddress.address,
-          ),
-          email.receivedDateTime,
-          email.createdDateTime,
-          email.parentFolderId,
-          email.originalFolderId,
-          email.isRead,
-          email.isFlagged,
-          email.isDeleted,
-          email.isMoved,
-          email.isNew,
-        );
+      emails.forEach(async (email: any) => {
+        const emailDocument = this.transformEmailToDocument(userId, email);
         await this.emailSyncRepository.createOrUpdate(emailDocument);
         logger.info(`Email stored with ID: ${email.id}`);
       });
     } catch (error: any) {
       logger.error(`Error storing email `, error.message);
     }
+  }
+
+  private transformEmailToDocument(email: any, userId: string): EmailModel {
+    return new EmailModel(
+      userId,
+      email.id,
+      email.createdDateTime,
+      email.sentDateTime,
+      email.subject,
+      email.from,
+      email.to,
+      email.body,
+      email.isRead,
+      email.isFlagged,
+      email.categories,
+      email.importance,
+      email.parentFolderId,
+      email.conversationId,
+      email.conversationIndex,
+      email.internetMessageId,
+      email.isDeliveryReceiptRequested,
+      email.isReadReceiptRequested,
+      email.isDraft,
+      email.webLink,
+      email.inferenceClassification,
+      email.changeKey,
+      email.flag,
+      email.provider,
+      email.etag,
+      email.lastModifiedDateTime,
+      email.cc,
+      email.bcc,
+      email.replyTo,
+      email.attachments,
+    );
   }
 
   private async createSubscription(
@@ -160,7 +176,7 @@ export class EmailSyncService implements IEmailSyncService {
   ) {
     const existingEmail = await this.emailSyncRepository.findByEmailId(emailId);
     if (!existingEmail) {
-      await this.storeEmail(newEmail.from.emailAddress.address, [newEmail]);
+      await this.storeEmails(newEmail.from.emailAddress.address, [newEmail]);
       io.emit('emailCreated', newEmail); // Emit event for new email
       logger.info(`Stored new email ID: ${emailId}`);
     }
@@ -174,7 +190,7 @@ export class EmailSyncService implements IEmailSyncService {
     updatedEmail.isFlagged = this.getIsFlagged(updatedEmail);
     updatedEmail.isMoved = this.getIsMoved(updatedEmail);
     updatedEmail.isNew = !updatedEmail.isRead;
-    await this.storeEmail(emailId, [updatedEmail]);
+    await this.storeEmails(emailId, [updatedEmail]);
 
     const existingEmail = await this.emailSyncRepository.findByEmailId(emailId);
     if (existingEmail) {
@@ -184,7 +200,7 @@ export class EmailSyncService implements IEmailSyncService {
         existingEmail.isDeleted !== updatedEmail.isDeleted ||
         existingEmail.isRead !== updatedEmail.isRead;
       if (isChanged) {
-        await this.storeEmail(updatedEmail.from.emailAddress.address, [
+        await this.storeEmails(updatedEmail.from.emailAddress.address, [
           updatedEmail,
         ]);
         io.emit('emailUpdated', updatedEmail); // Emit event for updated email

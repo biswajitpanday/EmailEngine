@@ -4,19 +4,19 @@ import { Client } from '@elastic/elasticsearch';
 import { IEmailSyncRepository } from '../../domain/interfaces/IEmailSyncRepository';
 import AppConst from '../../utils/Constants';
 import logger from '../../utils/Logger';
-import { EmailSyncModel } from '../persistence/documents/EmailSyncModel';
+import { EmailModel } from '../persistence/documents/EmailModel';
 
 @injectable()
 export class EmailSyncRepository
-  extends ElasticsearchRepository<EmailSyncModel>
+  extends ElasticsearchRepository<EmailModel>
   implements IEmailSyncRepository
 {
   constructor() {
     super(new Client({ node: AppConst.ElasticSearchHost }), 'emails');
   }
 
-  public async createOrUpdate(emailDocument: EmailSyncModel): Promise<void> {
-    const existingEmail = await this.findByEmailId(emailDocument.emailId);
+  public async createOrUpdate(emailDocument: EmailModel): Promise<void> {
+    const existingEmail = await this.findByEmailId(emailDocument.id!);
     if (!existingEmail) {
       await this.create(emailDocument);
     } else {
@@ -24,20 +24,20 @@ export class EmailSyncRepository
     }
   }
 
-  public async findByEmailId(emailId: any): Promise<EmailSyncModel | null> {
+  public async findByEmailId(id: string): Promise<EmailModel | null> {
     const body = {
-      match: { emailId },
+      match: { id },
     };
     const result = await this.findOne(body);
     if (result) {
-      logger.info(`Email found with emailId: ${emailId}`);
+      logger.info(`Email found with emailId: ${id}`);
       return result;
     }
-    logger.warn(`No email found with emailId: ${emailId}`);
+    logger.warn(`No email found with emailId: ${id}`);
     return null;
   }
 
-  public async findByUserId(userId: any): Promise<EmailSyncModel | null> {
+  public async findByUserId(userId: any): Promise<EmailModel | null> {
     const body = {
       match: { userId },
     };

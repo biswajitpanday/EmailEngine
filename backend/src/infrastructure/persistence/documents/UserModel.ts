@@ -1,5 +1,5 @@
-import { IsEmail, IsNotEmpty, IsOptional, Length } from 'class-validator';
-import { Exclude, Expose } from 'class-transformer';
+import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
+import { Expose } from 'class-transformer';
 import { ElasticSearchDocument } from './ElasticSearchDocument';
 
 /**
@@ -12,13 +12,8 @@ export class UserModel extends ElasticSearchDocument {
   public email: string;
 
   @IsOptional()
-  @Length(4, 100, { message: 'Password must be at least 4 characters long' })
-  @Exclude({ toPlainOnly: true })
-  public password?: string;
-
-  @IsOptional()
   @Expose()
-  public outlookToken?: string;
+  public authToken?: string;
 
   @IsOptional()
   @Expose()
@@ -27,19 +22,13 @@ export class UserModel extends ElasticSearchDocument {
   /**
    * User model constructor
    * @param email - User's email address
-   * @param outlookToken - User's Outlook token (optional)
+   * @param authToken - User's Provider's auth token (optional)
    * @param refreshToken - User's refresh token (optional)
    */
-  constructor(
-    email: string,
-    outlookToken?: string,
-    refreshToken?: string,
-    password?: string,
-  ) {
+  constructor(email: string, authToken?: string, refreshToken?: string) {
     super();
     this.email = email;
-    this.outlookToken = outlookToken;
+    this.outlookToken = authToken;
     this.refreshToken = refreshToken;
-    this.password = password;
   }
 }

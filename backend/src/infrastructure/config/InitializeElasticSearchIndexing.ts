@@ -1,7 +1,7 @@
 import { Client } from '@elastic/elasticsearch';
 import logger from '../../utils/Logger';
 import emailMappings from '../persistence/indices/EmailMappings';
-import mailboxMappings from '../persistence/indices/MailBoxMappings';
+import folderMappings from '../persistence/indices/FolderMappings';
 import userMappings from '../persistence/indices/UserMappings';
 
 /**
@@ -14,7 +14,7 @@ const initializeElasticSearchIndexing = async (
   const indices = [
     { name: 'users', body: userMappings },
     { name: 'emails', body: emailMappings },
-    { name: 'mailboxes', body: mailboxMappings },
+    { name: 'folders', body: folderMappings },
   ];
 
   for (const index of indices) {
