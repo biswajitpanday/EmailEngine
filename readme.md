@@ -1,5 +1,5 @@
 # EmailEngine
-#### EmailEngine is a Email Synchronization Application.
+#### EmailEngine is an Email Synchronization Application.
 
 ## Features
 
